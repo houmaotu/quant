@@ -1,0 +1,1008 @@
+import pandas as pd
+import numpy as np
+import random
+import bottleneck as bn
+from scipy import stats
+from datetime import time
+import warnings
+from functools import reduce
+warnings.filterwarnings("ignore", category=Warning)
+def tutu_rolling_nansum_fornumpy(arr,window): #inf 没有去掉 帮助函数
+    window_sum = np.nancumsum(arr,axis = 0)
+    window_count = np.cumsum(~np.isnan(arr),axis = 0)
+    window_sum = np.vstack((np.zeros((window,arr.shape[1])),window_sum))
+    window_count = np.vstack((np.zeros((window,arr.shape[1])),window_count))
+    window_sum = window_sum[window:] - window_sum[:-window]
+    window_count = window_count[window:] - window_count[:-window]
+    result = np.where(window_count == 0, np.nan, window_sum)
+    result[:window-1] = np.nan
+    return result
+
+def tutu_rolling_sum_fornumpy(arr,window): #注意 需要处理完成之后运行 帮助函数
+    window_sum = np.cumsum(arr,axis = 0)
+    window_sum = np.vstack((np.zeros((window,arr.shape[1])),window_sum))
+    window_sum = window_sum[window:] - window_sum[:-window]
+    window_sum[:window-1] = np.nan
+    return window_sum
+
+
+
+#基础操作
+def tutu_if(df,true_val,false_val):
+    assert isinstance(df,pd.DataFrame), '不是df'
+    if isinstance(true_val,pd.DataFrame):
+        assert true_val.shape == df.shape,'形状不一致'
+        true_val2 = true_val.values
+    else:
+        true_val2 = true_val
+        
+    if isinstance(false_val,pd.DataFrame):
+        assert false_val.shape == df.shape,'形状不一致'
+        false_val2 = false_val.values
+    else:
+        false_val2 = false_val
+    
+    return pd.DataFrame(np.where(df.values,true_val2,false_val2),index = df.index,columns = df.columns)
+
+def tutu_sign(df):
+    assert isinstance(df,pd.DataFrame), '不是df'
+    return pd.DataFrame(np.sign(df.values),index = df.index,columns = df.columns)
+
+def tutu_ffillna(df):
+    assert isinstance(df,pd.DataFrame), '不是df'
+    return pd.DataFrame(bn.push(df.values,axis = 0),index = df.index,columns = df.columns)
+
+
+def tutu_min(*dfs):
+    # 检查输入参数是否为 DataFrame
+    for df in dfs:
+        assert isinstance(df, pd.DataFrame), '不是df'
+    
+    # 检查 DataFrame 的形状是否一致
+    shapes = [df.shape for df in dfs]
+    assert len(set(shapes)) == 1,'形状不对'
+    
+    # 将 DataFrame 转换为 NumPy 数组
+    arrays = [df.values for df in dfs]
+    
+    # 求多个 DataFrame 在相同位置的元素的最小值
+    min_values = reduce(lambda a,b: np.where((a <b)|np.isnan(b),a,b ),arrays)
+    
+    # 创建结果 DataFrame
+    result = pd.DataFrame(min_values, index =dfs[0].index, columns=dfs[0].columns)
+    
+    return result
+
+def tutu_max(*dfs):
+    # 检查输入参数是否为 DataFrame
+    for df in dfs:
+        assert isinstance(df, pd.DataFrame), '不是df'
+    
+    # 检查 DataFrame 的形状是否一致
+    shapes = [df.shape for df in dfs]
+    assert len(set(shapes)) == 1,'形状不对'
+    
+    # 将 DataFrame 转换为 NumPy 数组
+    arrays = [df.values for df in dfs]
+    
+    # 求多个 DataFrame 在相同位置的元素的最小值
+    min_values = reduce(lambda a,b: np.where((a >b)|np.isnan(b),a,b ),arrays)
+    
+    # 创建结果 DataFrame
+    result = pd.DataFrame(min_values, index =dfs[0].index, columns=dfs[0].columns)
+    
+    return result
+
+#横截面操作
+
+def tutu_win(df,q1,q2):
+    assert isinstance(df,pd.DataFrame), '不是df'
+    assert 0 <= q1< q2<=1,'分位数不对'
+    df_numpy = df.copy().values
+    for i in range(df_numpy.shape[0]):
+        tmp = df_numpy[i,]
+        sp1,sp2 = np.nanquantile(tmp,q1),np.nanquantile(tmp,q2)
+        tmp[tmp<sp1]  = sp1
+        tmp[tmp>sp2] = sp2
+        df_numpy[i,] = tmp
+    return pd.DataFrame(df_numpy,index = df.index,columns = df.columns)
+
+
+def tutu_win2(df,q1,q2):
+    assert isinstance(df,pd.DataFrame), '不是df'
+    assert 0 <= q1< q2<=1,'分位数不对'
+    df_numpy = df.copy().values
+    sp1,sp2 = np.nanquantile(df_numpy,q1,keepdims = True,axis = 1),np.nanquantile(df_numpy,q2,keepdims = True,axis = 1)
+
+    df_numpy[(df_numpy<sp1) | (df_numpy>sp2)] = np.nan
+    return pd.DataFrame(df_numpy,index = df.index,columns = df.columns)   
+
+def tutu_rank(df):
+    assert isinstance(df,pd.DataFrame), '不是df'
+    return pd.DataFrame(stats.rankdata(df, method='ordinal', axis=1, nan_policy='omit'),index = df.index,columns = df.columns)
+
+def tutu_row_mean(df):
+    assert isinstance(df,pd.DataFrame), '不是df'
+    df_numpy = df.copy().values
+    df_numpy[np.isinf(df_numpy)] == np.nan
+    row_means = np.nanmean(df_numpy,axis = 1,keepdims = True)
+    return pd.DataFrame(np.where(np.isnan(df_numpy),np.nan,row_means),index = df.index,columns = df.columns)
+    
+def tutu_demean(df):
+    assert isinstance(df,pd.DataFrame), '不是df'
+    df_numpy = df.copy().values
+    df_numpy[np.isinf(df_numpy)] = np.nan
+    row_means = np.nanmean(df_numpy,axis = 1,keepdims = True)
+    return pd.DataFrame(np.where(np.isnan(df_numpy),np.nan,df_numpy - row_means),index = df.index,columns = df.columns)
+    
+def tutu_normalize(df):
+    assert isinstance(df,pd.DataFrame), '不是df'
+    df_numpy = df.copy().values
+    df_numpy[np.isinf(df_numpy)] == np.nan
+    row_means = np.nanmean(df_numpy,axis = 1,keepdims = True)
+    row_std = np.nanstd(df_numpy,axis = 1,ddof = 1,keepdims = True)
+    return pd.DataFrame(np.where(np.isnan(df_numpy),np.nan,(df_numpy - row_means)/row_std),index = df.index,columns = df.columns)
+    
+
+def tutu_normalize2(df):
+    assert isinstance(df,pd.DataFrame), '不是df'
+    df_numpy = df.copy().values
+    df_numpy[np.isinf(df_numpy)] == np.nan
+    df_numpy = stats.rankdata(df_numpy, method='ordinal', axis=1, nan_policy='omit')
+    row_means = np.nanmean(df_numpy,axis = 1,keepdims = True)
+    row_std = np.nanstd(df_numpy,axis = 1,ddof = 1,keepdims = True)
+    return pd.DataFrame(np.where(np.isnan(df_numpy),np.nan,(df_numpy - row_means)/row_std),index = df.index,columns = df.columns)
+
+def tutu_normalize3(df):
+    assert isinstance(df,pd.DataFrame), '不是df'
+    df_numpy = df.copy().values
+    df_numpy[np.isinf(df_numpy)] == np.nan
+    row_min = np.nanmin(df_numpy,axis = 1,keepdims = True)
+    row_max = np.nanmax(df_numpy,axis = 1,keepdims = True)
+    return pd.DataFrame(np.where(np.isnan(df_numpy),np.nan,(df_numpy - row_min)/(row_max - row_min)),index = df.index,columns = df.columns)
+
+def tutu_rank_normalize(df):
+    assert isinstance(df,pd.DataFrame), '不是df'
+    dfr = stats.rankdata(df, method='ordinal', axis=1, nan_policy='omit') - 1
+    dfr  = dfr  / np.nanmax(dfr ,axis = 1,keepdims = True)
+    dfr  = np.where(dfr  > 0.99,0.99,dfr )
+    dfr  = np.where(dfr  < 0.01,0.01,dfr )
+    return tutu_normalize(tutu_rank(df))
+    
+
+def tutu_duizhe(df):
+    assert isinstance(df,pd.DataFrame), '不是df'
+    return -tutu_demean(df).abs()
+def tutu_duizhe2(df):
+    assert isinstance(df,pd.DataFrame), '不是df'
+    return -tutu_normalize(df).abs()
+def tutu_duizhe3(df):
+    assert isinstance(df,pd.DataFrame), '不是df'
+    return -tutu_normalize2(df).abs()
+
+#横截面组操作
+def tutu_group_mean(df1,df2): #df1 value df2 group
+    assert isinstance(df1,pd.DataFrame) and isinstance(df2,pd.DataFrame), '不是df'
+    assert df1.shape == df2.shape, '形状不一致'
+    df1_numpy = df1.copy().values
+    df2_numpy = df2.copy().values
+    invalid = np.isinf(df1_numpy) | np.isinf(df2_numpy) | np.isnan(df1_numpy) | np.isnan(df2_numpy)
+    df1_numpy[invalid] = np.nan
+    df2_numpy[invalid] = np.nan
+    result = np.full(df1_numpy.shape,np.nan)
+    for i in range(df1_numpy.shape[0]):
+        data_row = df1_numpy[i]
+        group_row = df2_numpy[i]
+        group_tmp = np.full(data_row.shape,np.nan)
+        for j in np.unique(group_row):
+            if not np.isnan(j):
+                indices = np.where((group_row == j))[0]
+                if indices.shape[0] > 0:
+                    tmp = data_row[indices].mean()
+                    group_tmp[indices] = tmp
+        result[i] = group_tmp
+    return pd.DataFrame(result,index = df1.index, columns = df1.columns)
+                
+
+def tutu_group_demean(df1,df2): #df1 value df2 group
+    return df1 - tutu_group_mean(df1,df2)
+
+def tutu_group_max(df1,df2): #df1 value df2 group
+    assert isinstance(df1,pd.DataFrame) and isinstance(df2,pd.DataFrame), '不是df'
+    assert df1.shape == df2.shape, '形状不一致'
+    df1_numpy = df1.copy().values
+    df2_numpy = df2.copy().values
+    invalid = np.isinf(df1_numpy) | np.isinf(df2_numpy) | np.isnan(df1_numpy) | np.isnan(df2_numpy)
+    df1_numpy[invalid] = np.nan
+    df2_numpy[invalid] = np.nan
+    result = np.full(df1_numpy.shape,np.nan)
+    for i in range(df1_numpy.shape[0]):
+        data_row = df1_numpy[i]
+        group_row = df2_numpy[i]
+        group_tmp = np.full(data_row.shape,np.nan)
+        for j in np.unique(group_row):
+            if not np.isnan(j):
+                indices = np.where((group_row == j))[0]
+                if indices.shape[0] > 0:
+                    tmp = data_row[indices].max()
+                    group_tmp[indices] = tmp
+        result[i] = group_tmp
+    return pd.DataFrame(result,index = df1.index, columns = df1.columns)
+
+def tutu_group_min(df1,df2): #df1 value df2 group
+    assert isinstance(df1,pd.DataFrame) and isinstance(df2,pd.DataFrame), '不是df'
+    assert df1.shape == df2.shape, '形状不一致'
+    df1_numpy = df1.copy().values
+    df2_numpy = df2.copy().values
+    invalid = np.isinf(df1_numpy) | np.isinf(df2_numpy) | np.isnan(df1_numpy) | np.isnan(df2_numpy)
+    df1_numpy[invalid] = np.nan
+    df2_numpy[invalid] = np.nan
+    result = np.full(df1_numpy.shape,np.nan)
+    for i in range(df1_numpy.shape[0]):
+        data_row = df1_numpy[i]
+        group_row = df2_numpy[i]
+        group_tmp = np.full(data_row.shape,np.nan)
+        for j in np.unique(group_row):
+            if not np.isnan(j):
+                indices = np.where((group_row == j))[0]
+                if indices.shape[0] > 0:
+                    tmp = data_row[indices].min()
+                    group_tmp[indices] = tmp
+        result[i] = group_tmp
+    return pd.DataFrame(result,index = df1.index, columns = df1.columns)
+
+def tutu_group_sum(df1,df2): #df1 value df2 group
+    assert isinstance(df1,pd.DataFrame) and isinstance(df2,pd.DataFrame), '不是df'
+    assert df1.shape == df2.shape, '形状不一致'
+    df1_numpy = df1.copy().values
+    df2_numpy = df2.copy().values
+    invalid = np.isinf(df1_numpy) | np.isinf(df2_numpy) | np.isnan(df1_numpy) | np.isnan(df2_numpy)
+    df1_numpy[invalid] = np.nan
+    df2_numpy[invalid] = np.nan
+    result = np.full(df1_numpy.shape,np.nan)
+    for i in range(df1_numpy.shape[0]):
+        data_row = df1_numpy[i]
+        group_row = df2_numpy[i]
+        group_tmp = np.full(data_row.shape,np.nan)
+        for j in np.unique(group_row):
+            if not np.isnan(j):
+                indices = np.where((group_row == j))[0]
+                if indices.shape[0] > 0:
+                    tmp = data_row[indices].sum()
+                    group_tmp[indices] = tmp
+        result[i] = group_tmp
+    return pd.DataFrame(result,index = df1.index, columns = df1.columns)
+
+def tutu_group_std(df1,df2): #df1 value df2 group
+    assert isinstance(df1,pd.DataFrame) and isinstance(df2,pd.DataFrame), '不是df'
+    assert df1.shape == df2.shape, '形状不一致'
+    df1_numpy = df1.copy().values
+    df2_numpy = df2.copy().values
+    invalid = np.isinf(df1_numpy) | np.isinf(df2_numpy) | np.isnan(df1_numpy) | np.isnan(df2_numpy)
+    df1_numpy[invalid] = np.nan
+    df2_numpy[invalid] = np.nan
+    result = np.full(df1_numpy.shape,np.nan)
+    for i in range(df1_numpy.shape[0]):
+        data_row = df1_numpy[i]
+        group_row = df2_numpy[i]
+        group_tmp = np.full(data_row.shape,np.nan)
+        for j in np.unique(group_row):
+            if not np.isnan(j):
+                indices = np.where((group_row == j))[0]
+                if indices.shape[0] > 0:
+                    tmp = data_row[indices].std()
+                    group_tmp[indices] = tmp
+        result[i] = group_tmp
+    return pd.DataFrame(result,index = df1.index, columns = df1.columns)
+
+
+
+# 横截面双df操作
+
+def tutu_tregresi(df1,df2): #df1 value df2 group
+    assert isinstance(df1,pd.DataFrame) and isinstance(df2,pd.DataFrame), '不是df'
+    assert df1.shape == df2.shape, '形状不一致'
+    df1_numpy = df1.copy().values
+    df2_numpy = df2.copy().values
+    mask = np.isinf(df1_numpy) | np.isinf(df2_numpy) | np.isnan(df1_numpy) | np.isnan(df2_numpy)
+    
+    num = np.sum(~mask,axis = 1)
+    df1_numpy = np.where(mask,0,df1_numpy)
+    df2_numpy = np.where(mask,0,df2_numpy)
+    
+    x_sum = np.sum(df2_numpy,axis = 1)
+    y_sum = np.sum(df1_numpy,axis = 1)
+    beta1 = num * np.sum(df2_numpy * df1_numpy,axis = 1) - x_sum * y_sum
+    beta1 = beta1 / (num * np.sum(df2_numpy * df2_numpy,axis = 1) - x_sum * x_sum )
+    ym = y_sum / num
+    beta0 = ym - beta1 * x_sum/num
+    result = df1_numpy - beta0.reshape(-1,1) - beta1.reshape(-1,1) * df2_numpy
+    result = np.where(np.isnan(result), df1_numpy - ym.reshape(-1,1),result)
+    result = np.where(mask,np.nan,result)
+    return pd.DataFrame(result,index = df1.index, columns = df1.columns)
+
+
+
+#时间序列操作
+def tutu_ts_delay(df,window):
+    assert isinstance(df,pd.DataFrame), '不是df'
+    assert isinstance(window,int) and window >= 0,'时间不对'
+    assert df.shape[0] >= window, '时间短了'
+    return df.shift(window)
+
+def tutu_ts_max(df,window):
+    assert isinstance(df,pd.DataFrame), '不是df'
+    assert isinstance(window,int) and window >= 1,'时间不对'
+    res = df.rolling(window,1).max()
+    res.iloc[:(window-1),:] = np.nan
+    return res
+def tutu_ts_min(df,window):
+    assert isinstance(df,pd.DataFrame), '不是df'
+    assert isinstance(window,int) and window >= 1,'时间不对'
+    res = df.rolling(window,1).min()
+    res.iloc[:(window-1),:] = np.nan
+    return res
+
+def tutu_ts_mean(df,window):
+    assert isinstance(df,pd.DataFrame), '不是df'
+    assert isinstance(window,int) and window >= 1,'时间不对'
+    assert df.shape[0] >= window, '时间短了'
+    df_numpy = df.copy().values
+    df_numpy[np.isinf(df_numpy)] = np.nan
+    window_sum = np.nancumsum(df_numpy,axis = 0)
+    window_count = np.cumsum(~np.isnan(df_numpy),axis = 0)
+    window_sum = np.vstack((np.zeros((window,df_numpy.shape[1])),window_sum))
+    window_count = np.vstack((np.zeros((window,df_numpy.shape[1])),window_count))
+    window_sum = window_sum[window:] - window_sum[:-window]
+    window_count = window_count[window:] - window_count[:-window]
+    
+    result =  window_sum/window_count
+    result[:window-1] = np.nan
+    
+    return pd.DataFrame(result,index = df.index,columns = df.columns)
+    
+
+def tutu_ts_sum(df,window):
+    assert isinstance(df,pd.DataFrame), '不是df'
+    assert isinstance(window,int) and window >= 1,'时间不对'
+    assert df.shape[0] >= window, '时间短了'
+    df_numpy = df.copy().values
+    df_numpy[np.isinf(df_numpy)] = np.nan
+    
+    return pd.DataFrame(tutu_rolling_nansum_fornumpy(df_numpy,window),index = df.index,columns = df.columns)
+
+def tutu_ts_var(df,window):
+    assert isinstance(df,pd.DataFrame), '不是df'
+    assert isinstance(window,int) and window >= 1,'时间不对'
+    assert df.shape[0] >= window, '时间短了'
+    df_numpy = df.copy().values
+    df_numpy[np.isinf(df_numpy)] = np.nan
+    window_sum = np.nancumsum(df_numpy,axis = 0)
+    window_sum = np.vstack((np.zeros((window,df_numpy.shape[1])),window_sum))
+    window_sum = window_sum[window:] - window_sum[:-window]
+    
+    window_sum2 = np.nancumsum(df_numpy**2,axis = 0)
+    window_sum2 = np.vstack((np.zeros((window,df_numpy.shape[1])),window_sum2))
+    window_sum2 = window_sum2[window:] - window_sum2[:-window]
+    
+    window_count = np.cumsum(~np.isnan(df_numpy),axis = 0)
+    window_count = np.vstack((np.zeros((window,df_numpy.shape[1])),window_count))
+    window_count = window_count[window:] - window_count[:-window]
+    
+    result =  (window_sum2 - window_sum**2/window_count) / (window_count - 1)
+    result[:window-1] = np.nan
+    result[np.isinf(result)] = np.nan
+    return pd.DataFrame(result,index = df.index,columns = df.columns)
+
+def tutu_ts_stddev(df,window):
+    assert isinstance(df,pd.DataFrame), '不是df'
+    assert isinstance(window,int) and window >= 1,'时间不对'
+    assert df.shape[0] >= window, '时间短了'
+    df_numpy = df.copy().values
+    df_numpy[np.isinf(df_numpy)] = np.nan
+    window_sum = np.nancumsum(df_numpy,axis = 0)
+    window_sum = np.vstack((np.zeros((window,df_numpy.shape[1])),window_sum))
+    window_sum = window_sum[window:] - window_sum[:-window]
+    
+    window_sum2 = np.nancumsum(df_numpy**2,axis = 0)
+    window_sum2 = np.vstack((np.zeros((window,df_numpy.shape[1])),window_sum2))
+    window_sum2 = window_sum2[window:] - window_sum2[:-window]
+    
+    window_count = np.cumsum(~np.isnan(df_numpy),axis = 0)
+    window_count = np.vstack((np.zeros((window,df_numpy.shape[1])),window_count))
+    window_count = window_count[window:] - window_count[:-window]
+    
+    result =  (window_sum2 - window_sum**2/window_count) / (window_count - 1)
+    result[:window-1] = np.nan
+    result[np.isinf(result)] = np.nan
+    return np.sqrt(pd.DataFrame(result,index = df.index,columns = df.columns))
+    
+def tutu_ts_zscore(df,n):
+    return tutu_ts_mean(df,n)/tutu_ts_stddev(df,n)
+
+def tutu_ema(df,n,decay = 0.9):
+    assert isinstance(df,pd.DataFrame), '不是df'
+    assert df.shape[0] >=n, 'df短了'
+    assert 0.01 < decay < 1,'decay不对'
+    df_numpy = df.values
+    mask = np.isnan(df_numpy)
+    w = np.where(mask,0.,1.)
+    multiplyer = np.where(mask,1.,decay)
+    v = np.where(mask,0.,df_numpy)
+
+    for i in range(1,v.shape[0]):
+        v[i,] += v[i-1,] * multiplyer[i,]
+        
+    cum_prod = np.cumprod(np.where(mask,1,decay),axis = 0)
+    cum_prod = np.vstack((np.ones((n,df_numpy.shape[1])),cum_prod))
+    cum_prod = cum_prod[n:,]/cum_prod[:-n,]
+    w = (1 - cum_prod)/(1 - decay)
+    vp = np.roll(v,shift = n,axis = 0)
+    vp[:n,] = 0
+    vp = vp * cum_prod
+    v = (v - vp)/w
+
+    v[:n-1] = np.nan
+    v = np.where(cum_prod == 1,np.nan,v)
+    return pd.DataFrame(v,index = df.index,columns = df.columns)
+
+#两个df时间序列
+def tutu_regresi(df1,df2,n): #y,x
+    assert isinstance(df1,pd.DataFrame) and isinstance(df2,pd.DataFrame), '不是df'
+    assert df1.shape == df2.shape, '形状不一致'
+    assert df1.shape[0] >=n, 'df短了'
+    assert n<=40000,'n太巨大了'
+    df1_numpy = df1.copy().values
+    df2_numpy = df2.copy().values
+    mask = np.isinf(df1_numpy) | np.isinf(df2_numpy) | np.isnan(df1_numpy) | np.isnan(df2_numpy)
+    
+    num = tutu_rolling_sum_fornumpy(~mask,n)
+
+    df1_numpy = np.where(mask,0,df1_numpy)
+    df2_numpy = np.where(mask,0,df2_numpy)
+    
+    x_sum = tutu_rolling_sum_fornumpy(df2_numpy,n)
+    y_sum = tutu_rolling_sum_fornumpy(df1_numpy,n)
+    beta1 = num * tutu_rolling_sum_fornumpy(df2_numpy * df1_numpy,n) - x_sum * y_sum
+    beta1 = beta1/(num * tutu_rolling_sum_fornumpy(df2_numpy * df2_numpy,n) -  x_sum * x_sum)
+    
+    ym = y_sum/num
+    beta0 = ym - beta1 * x_sum/num
+    result = df1_numpy - beta0 - beta1 * df2_numpy
+    result = np.where(np.isnan(result),df1_numpy -ym,result)
+    result = np.where((num<=1) | mask,np.nan,result)
+    
+    return pd.DataFrame(result,index = df1.index,columns = df1.columns)
+
+def tutu_regbeta(df1,df2,n): #y,x
+    assert isinstance(df1,pd.DataFrame) and isinstance(df2,pd.DataFrame), '不是df'
+    assert df1.shape == df2.shape, '形状不一致'
+    assert df1.shape[0] >=n, 'df短了'
+    assert n<=40000,'n太巨大了'
+    df1_numpy = df1.copy().values
+    df2_numpy = df2.copy().values
+    mask = np.isinf(df1_numpy) | np.isinf(df2_numpy) | np.isnan(df1_numpy) | np.isnan(df2_numpy)
+    
+    num = tutu_rolling_sum_fornumpy(~mask,n)
+
+    df1_numpy = np.where(mask,0,df1_numpy)
+    df2_numpy = np.where(mask,0,df2_numpy)
+    
+    x_sum = tutu_rolling_sum_fornumpy(df2_numpy,n)
+    y_sum = tutu_rolling_sum_fornumpy(df1_numpy,n)
+    beta1 = num * tutu_rolling_sum_fornumpy(df2_numpy * df1_numpy,n) - x_sum * y_sum
+    beta1 = beta1/(num * tutu_rolling_sum_fornumpy(df2_numpy * df2_numpy,n) -  x_sum * x_sum)
+
+    result = beta1
+    result = np.where((num<=1) | mask,np.nan,result)
+    
+    return pd.DataFrame(result,index = df1.index,columns = df1.columns)
+
+def tutu_correlation(df1,df2,n): #y,x
+    assert isinstance(df1,pd.DataFrame) and isinstance(df2,pd.DataFrame), '不是df'
+    assert df1.shape == df2.shape, '形状不一致'
+    assert df1.shape[0] >=n, 'df短了'
+    assert n<=40000,'n太巨大了'
+    df1_numpy = df1.copy().values
+    df2_numpy = df2.copy().values
+    mask = np.isinf(df1_numpy) | np.isinf(df2_numpy) | np.isnan(df1_numpy) | np.isnan(df2_numpy)
+    
+    num = tutu_rolling_sum_fornumpy(~mask,n)
+
+    df1_numpy = np.where(mask,0,df1_numpy)
+    df2_numpy = np.where(mask,0,df2_numpy)
+    
+    x_sum = tutu_rolling_sum_fornumpy(df2_numpy,n)
+    y_sum = tutu_rolling_sum_fornumpy(df1_numpy,n)
+    beta1 = num * tutu_rolling_sum_fornumpy(df2_numpy * df1_numpy,n) - x_sum * y_sum
+
+    beta1 = beta1/ np.sqrt(num * tutu_rolling_sum_fornumpy(df2_numpy * df2_numpy,n) -  x_sum * x_sum)
+    beta1 = beta1/ np.sqrt(num * tutu_rolling_sum_fornumpy(df1_numpy * df1_numpy,n) -  y_sum * y_sum)
+
+    result = beta1
+    result = np.where((num<=1) | mask,np.nan,result)
+    
+    return pd.DataFrame(result,index = df1.index,columns = df1.columns)
+
+
+def tutu_covariance(df1,df2,n): #y,x
+    assert isinstance(df1,pd.DataFrame) and isinstance(df2,pd.DataFrame), '不是df'
+    assert df1.shape == df2.shape, '形状不一致'
+    assert df1.shape[0] >=n, 'df短了'
+    assert n<=40000,'n太巨大了'
+    df1_numpy = df1.copy().values
+    df2_numpy = df2.copy().values
+    mask = np.isinf(df1_numpy) | np.isinf(df2_numpy) | np.isnan(df1_numpy) | np.isnan(df2_numpy)
+    
+    num = tutu_rolling_sum_fornumpy(~mask,n)
+
+    df1_numpy = np.where(mask,0,df1_numpy)
+    df2_numpy = np.where(mask,0,df2_numpy)
+    
+    x_sum = tutu_rolling_sum_fornumpy(df2_numpy,n)
+    y_sum = tutu_rolling_sum_fornumpy(df1_numpy,n)
+    beta1 = num * tutu_rolling_sum_fornumpy(df2_numpy * df1_numpy,n) - x_sum * y_sum
+
+    result = beta1
+    result = np.where((num<=1) | mask,np.nan,result)
+    
+    return pd.DataFrame(result,index = df1.index,columns = df1.columns)
+
+def tutu_correlation2(df1,df2,n): #y,x
+    assert isinstance(df1,pd.DataFrame) and isinstance(df2,pd.DataFrame), '不是df'
+    assert df1.shape == df2.shape, '形状不一致'
+    assert df1.shape[0] >=n, 'df短了'
+    assert n<=40000,'n太巨大了'
+    df1_numpy = df1.copy().values
+    df2_numpy = df2.copy().values
+    mask = np.isinf(df1_numpy) | np.isinf(df2_numpy) | np.isnan(df1_numpy) | np.isnan(df2_numpy)
+    
+    num = tutu_rolling_sum_fornumpy(~mask,n)
+
+    df1_numpy = np.where(mask,0,df1_numpy)
+    df2_numpy = np.where(mask,0,df2_numpy)
+    
+    x_sum = tutu_rolling_sum_fornumpy(df2_numpy,n)
+    y_sum = tutu_rolling_sum_fornumpy(df1_numpy,n)
+    beta1 = num * tutu_rolling_sum_fornumpy(df2_numpy * df1_numpy,n) - x_sum * y_sum
+
+    beta1 = beta1/ np.sqrt(num * tutu_rolling_sum_fornumpy(df2_numpy * df2_numpy,n) -  x_sum * x_sum)
+    beta1 = beta1/ np.sqrt(num * tutu_rolling_sum_fornumpy(df1_numpy * df1_numpy,n) -  y_sum * y_sum)
+
+    result = beta1
+    result = np.where((num<=1) ,np.nan,result)
+    
+    return pd.DataFrame(result,index = df1.index,columns = df1.columns)
+
+
+def tutu_covariance2(df1,df2,n): #y,x
+    assert isinstance(df1,pd.DataFrame) and isinstance(df2,pd.DataFrame), '不是df'
+    assert df1.shape == df2.shape, '形状不一致'
+    assert df1.shape[0] >=n, 'df短了'
+    assert n<=40000,'n太巨大了'
+    df1_numpy = df1.copy().values
+    df2_numpy = df2.copy().values
+    mask = np.isinf(df1_numpy) | np.isinf(df2_numpy) | np.isnan(df1_numpy) | np.isnan(df2_numpy)
+    
+    num = tutu_rolling_sum_fornumpy(~mask,n)
+
+    df1_numpy = np.where(mask,0,df1_numpy)
+    df2_numpy = np.where(mask,0,df2_numpy)
+    
+    x_sum = tutu_rolling_sum_fornumpy(df2_numpy,n)
+    y_sum = tutu_rolling_sum_fornumpy(df1_numpy,n)
+    beta1 = num * tutu_rolling_sum_fornumpy(df2_numpy * df1_numpy,n) - x_sum * y_sum
+
+    result = beta1
+    result = np.where((num<=1) ,np.nan,result)
+    
+    return pd.DataFrame(result,index = df1.index,columns = df1.columns)
+
+def tutu_regbeta2(df1,df2,n): #y,x
+    assert isinstance(df1,pd.DataFrame) and isinstance(df2,pd.DataFrame), '不是df'
+    assert df1.shape == df2.shape, '形状不一致'
+    assert df1.shape[0] >=n, 'df短了'
+    assert n<=40000,'n太巨大了'
+    df1_numpy = df1.copy().values
+    df2_numpy = df2.copy().values
+    mask = np.isinf(df1_numpy) | np.isinf(df2_numpy) | np.isnan(df1_numpy) | np.isnan(df2_numpy)
+    
+    num = tutu_rolling_sum_fornumpy(~mask,n)
+
+    df1_numpy = np.where(mask,0,df1_numpy)
+    df2_numpy = np.where(mask,0,df2_numpy)
+    
+    x_sum = tutu_rolling_sum_fornumpy(df2_numpy,n)
+    y_sum = tutu_rolling_sum_fornumpy(df1_numpy,n)
+    beta1 = num * tutu_rolling_sum_fornumpy(df2_numpy * df1_numpy,n) - x_sum * y_sum
+    beta1 = beta1/(num * tutu_rolling_sum_fornumpy(df2_numpy * df2_numpy,n) -  x_sum * x_sum)
+
+    result = beta1
+    result = np.where((num<=1),np.nan,result)
+    
+    return pd.DataFrame(result,index = df1.index,columns = df1.columns)
+
+#三个df
+
+def tutu_getpure(r,b,a):
+    assert isinstance(r,pd.DataFrame) and isinstance(b,pd.DataFrame) and isinstance(a,pd.DataFrame), '不是df'
+    assert b.shape == a.shape == r.shape, '形状不一致'
+    b = b.abs()
+    a = a.abs()
+    epsilon = tutu_tregresi(np.log(b/a),r)
+    tp = np.exp(epsilon)
+    i = (a + b) * tp/(1 + tp)
+    o = (a + b) /(1 + tp)
+    return o - i
+
+
+
+
+
+import os
+import pandas as pd
+
+import numpy as np
+
+import matplotlib.pyplot as plt
+import bottleneck as bn
+
+
+from tqdm import trange
+
+import numba as nb
+
+import numpy as np
+from scipy import stats
+
+wd = os.getcwd()
+
+from tqdm import tqdm
+
+
+from read_data import read_data
+from config import *
+import warnings
+warnings.filterwarnings("ignore", category=Warning)
+
+class SingleFactor:
+
+    def __init__(self, factor,start_time, end_time, price = 'vwap',method = 'rank_normalize',long_only = False):
+        self.method = method
+        self.long_only = long_only
+        start_time = pd.to_datetime(start_time, errors='coerce')
+        end_time = pd.to_datetime(end_time, errors='coerce')
+        if pd.isna(start_time) or pd.isna(end_time):
+            raise ValueError('日期输入不对')
+
+        self.start_time = start_time
+        self.end_time= end_time
+       
+        try:
+            #print('读取价格信息')
+            price = read_data(price,start_time = start_time ,end_time = end_time)
+            fuquan =  read_data('factor',start_time = start_time ,end_time = end_time)
+            fuquan = fuquan.reindex(columns = price.columns)
+            price = fuquan * price
+            #print('读取价格信息成功')
+        except:
+            raise ValueError('价格不对')
+
+        ret_price = price / price.shift(periods=1, axis=0) - 1
+
+        
+        #print('读取停复牌')
+        paused = read_data('paused',start_time = start_time ,end_time = end_time)
+        paused = paused.reindex(columns = price.columns)
+        #print('读取停复牌成功')
+      
+        #print('读取涨跌停')
+        vwap = read_data('vwap',start_time = start_time ,end_time = end_time)
+        vwap = vwap.reindex(columns = price.columns)
+        high_limit = read_data('high_limit',start_time = start_time ,end_time = end_time)
+        low_limit = read_data('low_limit',start_time = start_time ,end_time = end_time)
+        high_limit = high_limit.reindex(columns = price.columns)
+        low_limit = low_limit.reindex(columns = price.columns)
+        reach_high_limit =  np.where(high_limit == vwap,True,False)
+        reach_low_limit =  np.where(low_limit == vwap,True,False)
+        #print('读取涨跌停成功')
+        
+        #print('读取ST信息')
+        ST = read_data('ST',start_time = start_time ,end_time = end_time)
+        ST = ST.reindex(columns = price.columns)
+        #print('读取ST成功')
+        
+        #print('读取股票信息')
+        stock_data = pd.read_feather(f'{mywd}\\data01d\\stock_data.fea')
+
+        stock_data = stock_data.set_index('ticker')
+
+        arr = stock_data['start_date'].values
+        arr = arr[None,:]  
+        stock_data_start = pd.DataFrame(np.repeat(arr, ST.shape[0], axis=0),index = ST.index,columns = stock_data.index)
+
+        arr = stock_data['end_date'].values
+        arr = arr[None,:]  
+        stock_data_end = pd.DataFrame(np.repeat(arr, ST.shape[0], axis=0),index = ST.index,columns = stock_data.index)
+
+        arr = ST.index.values
+        arr = arr[:,None]  
+        stock_data_cur = pd.DataFrame(np.repeat(arr, ST.shape[1], axis=1),index = ST.index,columns = ST.columns)
+
+        stock_data_start = stock_data_start.reindex(columns = ST.columns)
+        stock_data_end = stock_data_end.reindex(columns = ST.columns)
+        
+        #print('读取股票信息成功')
+        #print('处理不交易股票')
+        is_valid = (stock_data_cur > (stock_data_start + pd.Timedelta(days = 180))) & (stock_data_cur < (stock_data_end - pd.Timedelta(days = 5))) & (~ST) & (paused == 0)
+        is_valid = is_valid.values
+        #print('处理不交易股票成功')
+        
+
+     
+
+        self.reach_high_limit = reach_high_limit[1:-1]
+        self.reach_low_limit = reach_low_limit[1:-1]
+        self.ret_price  = ret_price.values[2:]
+        self.is_valid = is_valid[1:-1] & is_valid[2:]
+        self.dates = ret_price.index[:-2]
+        self.shape = ret_price.shape
+        self.tickers = ret_price.columns
+        self.year = self.dates.year
+        
+        
+        self.process_factor(factor,self.method)
+        
+        #hs300
+        hs300 = pd.read_feather(f'{mywd}\\data01d\\hs300.fea')
+
+        hs300 = hs300.set_index('date')
+
+        hs300.index = pd.to_datetime(hs300.index)
+
+        hs300 = hs300.loc[self.dates]
+
+        hs300 = hs300.close
+
+        hs300 = hs300.values
+
+        hs300 = hs300/hs300[0] - 1
+        self.hs300 = hs300
+
+
+    def process_factor(self,factor,method = 'rank_normalize',long_only = False):
+        #print('处理因子')
+        self.method = method
+        self.long_only = long_only
+        assert isinstance(factor,pd.DataFrame),'因子不对'
+        factor = factor.copy()
+        factor = factor.loc[(factor.index>=  pd.to_datetime(self.start_time).replace(hour=0, minute=0, second=0)) & (factor.index <=  pd.to_datetime(self.end_time).replace(hour=23, minute=59, second=59))]
+        factor = factor.reindex(columns = self.tickers )
+        if factor.shape != self.shape:
+            print(factor.shape )
+            print(self.shape)
+            raise ValueError('因子形状不对')
+        #print('处理因子成功')
+        factor = factor.values[:-2]
+        factor = np.where(self.is_valid,factor,np.nan)
+        
+        
+        #print('标准化因子值')
+        if method == 'rank_weight':
+            factor_rank = stats.rankdata(factor, method='ordinal', axis=1, nan_policy='omit')
+            position = factor_rank - np.nanmedian(factor_rank,axis = 1,keepdims = True)
+            position = 2 * position / np.nansum(np.abs(position),axis = 1,keepdims = True)
+        elif method == 'rank_normalize':
+            factor_rank = stats.rankdata(factor, method='ordinal', axis=1, nan_policy='omit') - 1
+            factor_rank = factor_rank / np.nanmax(factor_rank,axis = 1,keepdims = True)
+            factor_rank = np.where(factor_rank > 0.99,0.99,factor_rank)
+            factor_rank = np.where(factor_rank < 0.01,0.01,factor_rank)
+            position = stats.norm.ppf(factor_rank)
+            position = 2 * position / np.nansum(np.abs(position),axis = 1,keepdims = True)
+        elif method == 'equal_weight':
+            factor_rank = stats.rankdata(factor, method='ordinal', axis=1, nan_policy='omit')
+            position = factor_rank - np.nanmedian(factor_rank,axis = 1,keepdims = True)
+            position = np.sign(position)
+            position = 2 * position / np.nansum(np.abs(position),axis = 1,keepdims = True)
+        if long_only:
+            position = np.where(position<0,0,position)
+        #print('标准化因子值成功')
+        #print('处理仓位')
+        position2 = self.process_position(position)
+        #print('处理仓位成功')
+    
+        factor_return = position2 * self.ret_price
+        daily_returns = np.nansum(factor_return,axis = 1)
+        
+        self.factor = factor
+        self.daily_returns = daily_returns
+        self.pnl = np.cumprod(1 + daily_returns) - 1
+        self.sharpe = self.calc_sharpe(daily_returns)
+        self.annual_return = self.calc_annual_return(daily_returns)
+        self.position = position
+        self.position2 = position2
+        self.turnover = self.calc_turnover(position2)
+    def process_position(self,position):
+        
+        
+        position2 = position.copy()
+        position2[0,] = np.where( (position2[0,] > 0)&(self.reach_high_limit[0]), 0,position2[0,])
+        position2[0,] = np.where( (position2[0,] < 0)&(self.reach_low_limit[0]), 0,position2[0,])
+        for i in range(1,position2.shape[0]):
+            position2[i,] = np.where( (position2[i,] >position2[i-1,])&(self.reach_high_limit[i]),position2[i-1,],position2[i,])
+            position2[i,] = np.where( (position2[i,] <position2[i-1,])&(self.reach_low_limit[i]),position2[i-1,],position2[i,])
+
+        return position2
+        
+    def calc_turnover(self,positions):
+        position_change = np.abs(np.diff(np.nan_to_num(positions.copy(),0),axis = 0))
+        return np.mean(position_change.sum(axis = 1))
+    
+    def calc_annual_return(self,daily_returns):
+        return np.prod(1 + daily_returns)**(252/len(daily_returns)) - 1
+    
+    def calc_sharpe(self,daily_returns,risk_free_rate = 0):
+      
+        annual_return = np.prod(1 + daily_returns)**(252/len(daily_returns)) - 1
+        annual_std = daily_returns.std() * np.sqrt(252)
+        # 计算 Sharpe Ratio
+        return (annual_return - risk_free_rate) / annual_std
+
+    def calc_ic(self):
+       #计算IC需咯额
+        ll = np.isnan(self.factor) | pd.notnull(self.ret_price)
+        ll = ~ll
+        factorv = np.where(ll,np.nan,self.factor)
+        retv = np.where(ll,np.nan,self.ret_price)
+
+        factorv = stats.rankdata(factorv, method='ordinal', axis=1, nan_policy='omit')
+        retv = stats.rankdata(retv, method='ordinal', axis=1, nan_policy='omit')
+        self.ic_ =  pd.DataFrame(factorv).corrwith(pd.DataFrame(retv),axis = 1).values
+    
+    def calc_ic_ir(self,ic_):
+        #计算IC和IR
+        ic = ic_.mean()
+        ir = ic/ic_.std()
+        return (ic,ir)
+    
+
+    def calc_max_drawdown(self,cum_returns):
+        #计算最大回撤'
+        cummax = np.maximum.accumulate(cum_returns) 
+        max_drawdown = (cummax  - cum_returns) / cummax 
+        return max_drawdown.max()
+
+    def calc_win_rate(self,daily_returns):
+        #计算胜率
+        win = daily_returns > 0 
+        return win.mean()
+
+    def process_detail(self):
+        self.calc_ic()
+        ic,ir = self.calc_ic_ir(self.ic_)
+        max_drawdown = self.calc_max_drawdown(1 + self.pnl)
+        winrate = self.calc_win_rate(self.daily_returns)
+        summary = {
+            'ret':[self.annual_return],
+            'pnl':[self.pnl[-1]],
+            'sharpe':[self.sharpe],
+            'turnover':[self.turnover],
+            'ic': [ic],
+            'ir': [ir],
+            'dd': [max_drawdown],
+            'wr': [winrate],
+        }
+        summary = pd.DataFrame(summary,index = [f'{self.year[0]}-{self.year[-1]}'])
+        self.summary = summary
+        
+    
+    def process_year_detail(self):
+        self.process_detail()
+        unique_year = np.unique(self.year)
+        unique_year.sort()
+        year_summary = {
+        'ret':[self.calc_annual_return(self.daily_returns[self.year == year]) for year in unique_year],
+        'pnl':np.diff([0] + [self.pnl[self.year == year][-1] for year in unique_year]).tolist(),
+        'sharpe':[self.calc_sharpe(self.daily_returns[self.year == year]) for year in unique_year],
+        'turnover':[self.calc_turnover(self.position2[self.year == year,:]) for year in unique_year],
+        'ic':[self.ic_[self.year == year].mean() for year in unique_year],
+        'ir':[self.ic_[self.year == year].mean()/self.ic_[self.year == year].std() for year in unique_year],
+        'dd':[self.calc_max_drawdown(1 + self.pnl[self.year == year]) for year in unique_year],
+        'wr':[self.calc_win_rate(self.daily_returns[self.year == year]) for year in unique_year]
+        }
+        year_summary = pd.DataFrame(year_summary,index = unique_year)
+        year_summary = pd.concat([year_summary,self.summary])
+        self.year_summary = year_summary
+        return year_summary
+    
+    
+   
+    def process_quantiles_detail(self, quantiles=10):
+        #计算分层IC/IR
+        quantile_metrics = {'ret':[],'pnl':[],'sharpe':[],'turnover': [], 'dd':[],'wr':[]}
+        quantile_pnls = {}
+        factor_rank = stats.rankdata(self.factor, method='ordinal', axis=1, nan_policy='omit')-1
+        factor_rank = factor_rank / np.nanmax(factor_rank,axis = 1,keepdims = True)
+        for i in range(1, quantiles+1):
+            # 计算每一分层的因子和收益率
+          
+            position = np.where( (factor_rank > 1 - i/quantiles) & (factor_rank <= 1 - (i - 1)/quantiles),1,0)
+            position = np.where(np.isnan(self.factor),np.nan,position)
+            position = position / np.nansum(np.abs(position),axis = 1,keepdims = True) 
+     
+            position2 = self.process_position(position)
+
+            factor_return = position2 * self.ret_price
+            daily_returns = np.nansum(factor_return,axis = 1)
+            pnl = np.cumprod(1 + daily_returns) - 1
+            sharpe = self.calc_sharpe(daily_returns)
+            annual_return = self.calc_annual_return(daily_returns)
+            turnover = self.calc_turnover(position2)
+            max_drawdown = self.calc_max_drawdown(1 + pnl)
+            winrate = self.calc_win_rate(daily_returns)
+            quantile_metrics['ret'].append(annual_return)
+            quantile_metrics['pnl'].append(pnl[-1])
+            quantile_metrics['sharpe'].append(sharpe)
+            quantile_metrics['turnover'].append(turnover)
+            quantile_metrics['dd'].append(max_drawdown)
+            quantile_metrics['wr'].append(winrate)
+            quantile_pnls[f'quantile{i}']=pnl
+        self.quantile_pnls = quantile_pnls
+        self.quantile_summary = pd.DataFrame(quantile_metrics,index = [f'quantile{i}' for i in range(1, quantiles+1)])
+        return self.quantile_summary
+    
+    def plot_pnl(self):
+        fig, ax = plt.subplots(figsize=(20, 6))
+        ax.plot(self.dates,self.pnl,label = 'factor')
+        ax.plot(self.dates,self.hs300,label = 'hs300')
+        ax.plot(self.dates,self.pnl - self.hs300,label = 'exceed')
+        ax.axhline(0, linestyle='--', color='black')
+        ax.set_xlabel('Date')
+        ax.set_ylabel('PnL')
+        ax.set_title('pnl')
+        # 将图例放置在图的最右侧像素的右侧
+        legend = ax.legend(loc='upper left', bbox_to_anchor=(1.01, 1))
+
+        # 调整图形尺寸，以便容纳图例
+        fig.tight_layout(rect=[0, 0, 0.9, 1])
+        plt.show()
+        
+    def plot_quantile_pnl(self):
+        fig, ax = plt.subplots(figsize=(20, 6))
+        q = len(self.quantile_pnls)
+        for quantile, pnl_quantile in self.quantile_pnls.items():
+            ax.plot(self.dates, pnl_quantile, label=quantile,color = (1 - (float(quantile[8:])-1)/(q-1),(float(quantile[8:])-1)/(q-1),0) )
+        ax.plot(self.dates,self.hs300,color = (0,0,1),label = 'hs300')
+        ax.axhline(0, linestyle='--', color='black')
+        ax.set_xlabel('Date')
+        ax.set_ylabel('PnL')
+        ax.set_title('Quantile Pnl')
+
+        # 将图例放置在图的最右侧像素的右侧
+        legend = ax.legend(loc='upper left', bbox_to_anchor=(1.01, 1))
+
+        # 调整图形尺寸，以便容纳图例
+        fig.tight_layout(rect=[0, 0, 0.9, 1])
+
+        # 显示图形
+        plt.show()
+        
+    def plot_quantile_exceed_pnl(self):
+        fig, ax = plt.subplots(figsize=(20, 6))
+        q = len(self.quantile_pnls)
+        for quantile, pnl_quantile in self.quantile_pnls.items():
+            ax.plot(self.dates, pnl_quantile - self.hs300, label=quantile,color = (1 - (float(quantile[8:])-1)/(q-1),(float(quantile[8:])-1)/(q-1),0) )
+        ax.axhline(0, linestyle='--', color='black')
+        ax.set_xlabel('Date')
+        ax.set_ylabel('PnL')
+        ax.set_title('Quantile Pnl')
+
+        # 将图例放置在图的最右侧像素的右侧
+        legend = ax.legend(loc='upper left', bbox_to_anchor=(1.01, 1))
+
+        # 调整图形尺寸，以便容纳图例
+        fig.tight_layout(rect=[0, 0, 0.9, 1])
+
+        # 显示图形
+        plt.show()
+
