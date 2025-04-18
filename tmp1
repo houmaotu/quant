@@ -1,0 +1,666 @@
+tmp = tmp2
+res = []
+pbar = tqdm(total = 16 * 7)
+for i in [5,10,20,40,60,90,120]:
+    for q1,q2 in [(0,1),(0,0.99),(0,0.975),(0,0.95),(0,0.9),(0,0.85),(0.01,0.99),(0.025,0.975),(0.05,0.95),(0.1,0.9),(0.15,0.85),(0.01,1),(0.025,1),(0.05,1),(0.1,1),(0.15,1)]:
+        tmp2 = tutu_win(tmp,q1,q2)
+        ana_obj.process_factor(tutu_ts_mean(tmp2,i))
+        res.append([i,q1,q2,'m',ana_obj.sharpe])
+        ana_obj.process_factor(tutu_ema(tmp2,i))
+        res.append([i,q1,q2,'e',ana_obj.sharpe])
+        pbar.update(1)
+pbar.close()       
+sorted(res,key = lambda x: -x[-1])[:10]
+
+
+
+tmp = -tmp1
+print('liq')
+ana_obj.process_factor(tutu_tregresi(tmp,tutu_ts_mean(turnover,20)))
+print('turnover20',ana_obj.sharpe)
+ana_obj.process_factor(tutu_tregresi(tmp,tutu_ts_mean(turnover,60)))
+print('turnover60',ana_obj.sharpe)
+ana_obj.process_factor(tutu_tregresi(tmp,tutu_ts_mean(turnover,120)))
+print('turnover120',ana_obj.sharpe)
+print('momrev')
+ana_obj.process_factor(tutu_tregresi(tmp,ret))
+print('ret',ana_obj.sharpe)
+ana_obj.process_factor(tutu_tregresi(tmp,tutu_ts_delay(ret,1)))
+print('retd1',ana_obj.sharpe)
+ana_obj.process_factor(tutu_tregresi(tmp,tutu_ts_mean(ret,20)))
+print('ret20',ana_obj.sharpe)
+ana_obj.process_factor(tutu_tregresi(tmp,tutu_ts_mean(ret,60)))
+print('ret60',ana_obj.sharpe)
+ana_obj.process_factor(tutu_tregresi(tmp,tutu_ts_mean(ret,120)))
+print('ret120',ana_obj.sharpe)
+print('vol')
+ana_obj.process_factor(tutu_tregresi(tmp,tutu_ts_stddev(ret,20)))
+print('vol20',ana_obj.sharpe)
+ana_obj.process_factor(tutu_tregresi(tmp,tutu_ts_stddev(ret,60)))
+print('vol60',ana_obj.sharpe)
+ana_obj.process_factor(tutu_tregresi(tmp,tutu_ts_stddev(ret,120)))
+print('vol120',ana_obj.sharpe)
+print('ind')
+ana_obj.process_factor(tutu_group_demean(tmp,ind))
+print('ind',ana_obj.sharpe)
+print('cap')
+ana_obj.process_factor(tutu_tregresi(tmp,np.log(cap)))
+print('lcap',ana_obj.sharpe)
+ana_obj.process_factor(tutu_tregresi(tmp,(cap)))
+print('cap',ana_obj.sharpe)
+print('ts')
+ana_obj.process_factor(tutu_ts_mean(tmp,20))
+print('tsmean20',ana_obj.sharpe)
+ana_obj.process_factor(tutu_ts_mean(tmp,60))
+print('tsmean60',ana_obj.sharpe)
+ana_obj.process_factor(tutu_ts_mean(tmp,120))
+print('tsmean120',ana_obj.sharpe)
+
+ana_obj.process_factor(tutu_ema(tmp,20))
+print('tsema20',ana_obj.sharpe)
+ana_obj.process_factor(tutu_ema(tmp,60))
+print('tsema60',ana_obj.sharpe)
+ana_obj.process_factor(tutu_ema(tmp,120))
+print('tsema120',ana_obj.sharpe)
+
+ana_obj.process_factor(tutu_ts_min(tmp,20))
+print('tsmin20',ana_obj.sharpe)
+ana_obj.process_factor(tutu_ts_min(tmp,60))
+print('tsmin60',ana_obj.sharpe)
+ana_obj.process_factor(tutu_ts_min(tmp,120))
+print('tsmin120',ana_obj.sharpe)
+
+ana_obj.process_factor(tutu_ts_max(tmp,20))
+print('tsmax20',ana_obj.sharpe)
+ana_obj.process_factor(tutu_ts_max(tmp,60))
+print('tsmax60',ana_obj.sharpe)
+ana_obj.process_factor(tutu_ts_max(tmp,120))
+print('tsmax120',ana_obj.sharpe)
+
+ana_obj.process_factor(tutu_ts_zscore(tmp,20))
+print('tszscore20',ana_obj.sharpe)
+ana_obj.process_factor(tutu_ts_zscore(tmp,60))
+print('tszscore60',ana_obj.sharpe)
+ana_obj.process_factor(tutu_ts_zscore(tmp,120))
+print('tszscore120',ana_obj.sharpe)
+
+ana_obj.process_factor(tutu_ts_mean(tmp,20)/tutu_ts_stddev(tmp,20))
+print('tsir20',ana_obj.sharpe)
+ana_obj.process_factor(tutu_ts_mean(tmp,60)/tutu_ts_stddev(tmp,60))
+print('tsir60',ana_obj.sharpe)
+ana_obj.process_factor(tutu_ts_mean(tmp,120)/tutu_ts_stddev(tmp,120))
+print('tsir120',ana_obj.sharpe)
+
+ana_obj.process_factor(tutu_ts_stddev(tmp,20))
+print('tsstddev20',ana_obj.sharpe)
+ana_obj.process_factor(tutu_ts_stddev(tmp,60))
+print('tsstddev60',ana_obj.sharpe)
+ana_obj.process_factor(tutu_ts_stddev(tmp,120))
+print('tsstddev120',ana_obj.sharpe)
+
+ana_obj.process_factor(-tutu_ts_stddev(tmp,20))
+print('-tsstddev20',ana_obj.sharpe)
+ana_obj.process_factor(-tutu_ts_stddev(tmp,60))
+print('-tsstddev60',ana_obj.sharpe)
+ana_obj.process_factor(-tutu_ts_stddev(tmp,120))
+print('-tsstddev120',ana_obj.sharpe)
+
+def inverse(df):
+    return 1/df
+def neg(df):
+    return -df
+def div(df1,df2):
+    return df1/df2
+def mylog(df):
+    return np.log(np.abs(df))
+def mysqrt(df):
+    return np.sqrt(np.abs(df))
+
+def duizhe(df):
+    return tutu_duizhe(df)
+def duizhe2(df):
+    return tutu_duizhe2(df)
+def duizhe3(df):
+    return tutu_duizhe3(df)
+
+def mean5(df):
+    return tutu_ts_mean(df,5)
+def mean10(df):
+    return tutu_ts_mean(df,10)
+def mean20(df):
+    return tutu_ts_mean(df,20)
+def mean60(df):
+    return tutu_ts_mean(df,60)
+def mean120(df):
+    return tutu_ts_mean(df,120)
+
+
+def ema5(df):
+    return tutu_ema(df,5)
+def ema10(df):
+    return tutu_ema(df,10)
+def ema20(df):
+    return tutu_ema(df,20)
+def ema60(df):
+    return tutu_ema(df,60)
+def ema120(df):
+    return tutu_ema(df,120)
+
+
+def min5(df):
+    return tutu_ts_min(df,5)
+def min10(df):
+    return tutu_ts_min(df,10)
+def min20(df):
+    return tutu_ts_min(df,20)
+def min60(df):
+    return tutu_ts_min(df,60)
+def min120(df):
+    return tutu_ts_min(df,120)
+
+def max5(df):
+    return tutu_ts_max(df,5)
+def max10(df):
+    return tutu_ts_max(df,10)
+def max20(df):
+    return tutu_ts_max(df,20)
+def max60(df):
+    return tutu_ts_max(df,60)
+def max120(df):
+    return tutu_ts_max(df,120)
+
+
+def stddev5(df):
+    return tutu_ts_stddev(df,5)
+def stddev10(df):
+    return tutu_ts_stddev(df,10)
+def stddev20(df):
+    return tutu_ts_stddev(df,20)
+def stddev60(df):
+    return tutu_ts_stddev(df,60)
+def stddev120(df):
+    return tutu_ts_stddev(df,120)
+
+def delta5(df):
+    return df - tutu_ts_delay(df,5)
+def delta10(df):
+    return df - tutu_ts_delay(df,10)
+def delta20(df):
+    return df - tutu_ts_delay(df,20)
+def delta60(df):
+    return df - tutu_ts_delay(df,60)
+def delta120(df):
+    return df - tutu_ts_delay(df,120)
+
+
+def zscore5(df):
+    return tutu_ts_zscore(df,5)
+def zscore10(df):
+    return tutu_ts_zscore(df,10)
+def zscore20(df):
+    return tutu_ts_zscore(df,20)
+def zscore60(df):
+    return tutu_ts_zscore(df,60)
+def zscore120(df):
+    return tutu_ts_zscore(df,120)
+
+def qdyb_5(df1,df2):
+    return df1*np.sign(df2.rank(axis = 1,pct = True) - 0.5)
+def qdyb_6(df1,df2):
+    return df1*np.sign(df2.rank(axis = 1,pct = True) - 0.6)
+def qdyb_7(df1,df2):
+    return df1*np.sign(df2.rank(axis = 1,pct = True) - 0.7)
+def qdyb_8(df1,df2):
+    return df1*np.sign(df2.rank(axis = 1,pct = True) - 0.8)
+def qdyb_9(df1,df2):
+    return df1*np.sign(df2.rank(axis = 1,pct = True) - 0.9)
+
+def corr5(df1,df2):
+    return tutu_correlation(df1,df2,5)
+def corr10(df1,df2):
+    return tutu_correlation(df1,df2,10)
+def corr20(df1,df2):
+    return tutu_correlation(df1,df2,20)
+def corr60(df1,df2):
+    return tutu_correlation(df1,df2,60)
+def corr120(df1,df2):
+    return tutu_correlation(df1,df2,120)
+
+def win1(df):
+    return tutu_win(df,0.1,0.9)
+def win2(df):
+    return tutu_win(df,0.05,0.95)
+def win3(df):
+    return tutu_win(df,0.,0.9)
+def win4(df):
+    return tutu_win(df,0.,0.95)
+
+
+def indneu(df):
+    return tutu_group_demean(df,ind)
+def capneu1(df):
+    return tutu_tregresi(df,cap)
+def capneu2(df):
+    return tutu_tregresi(df,np.log(cap))
+
+def get5(df):
+    dfr = df.rank(axis = 1,pct = True)
+    return [tutu_if(dfr > 0.8,1,0),tutu_if((dfr > 0.6)&(dfr <= 0.8),1,0),tutu_if((dfr > 0.4)&(dfr <= 0.6),1,0),tutu_if((dfr > 0.2)&(dfr <= 0.4),1,0),tutu_if(dfr<=0.2,1,0)]
+
+data = ret
+data0 = data
+data1 =tutu_ts_delay(data,1)
+data2=tutu_ts_delay(data,2)
+data3=tutu_ts_delay(data,3)
+data4=tutu_ts_delay(data,4)
+data5=tutu_ts_delay(data,5)
+data20 = tutu_ts_mean(data,20)
+data40= tutu_ts_mean(data,40)
+data60= tutu_ts_mean(data,60)
+data120= tutu_ts_mean(data,120)
+data180 = tutu_ts_mean(data,180)
+
+dflist = []
+
+for mydata in [data0,data1,data2,data3,data4,data5,data20,data40,data60,data120,data180]:
+    dflist = dflist + get5(mydata)
+    
+def mymetric(ls):
+    df = reduce(lambda a,b : a.add(b), [dflist[i] * ls[i] for i in range(dim)])
+    ana_obj.process_factor(df)
+    return ana_obj.sharpe
+
+
+
+dim = len(dflist)
+
+sp = 0
+ls = [0.5] * dim
+for count in range(1,100):
+    print(f'兔兔的第{count}轮')
+    for pos in range(dim):
+        print(f'{pos}',end = ' ')
+        ls_list = [(ls[:pos] + [i/20] + ls[pos+1:]) for i in range(21)]
+        ls_map = map(mymetric,ls_list)
+        ls_res = list(ls_map)
+        new_index = ls_res.index(max(ls_res))
+        ls = ls_list[new_index]
+        sp2 = max(ls_res)
+        print(f'现在的sharpe是{sp2}')
+        print('冲')
+        if sp2 - sp < 0.05:
+            print('就这样')
+            break
+        else:
+            sp = sp2
+            
+print(ls)
+tmp = reduce(lambda a,b : a.add(b), [dflist[i] * ls[i] for i in range(dim)])
+
+import os
+import pandas as pd
+
+import numpy as np
+
+import matplotlib.pyplot as plt
+import bottleneck as bn
+
+
+from tqdm import trange
+
+import numba as nb
+
+import numpy as np
+from scipy import stats
+
+wd = os.getcwd()
+
+from tqdm import tqdm
+
+
+
+
+import datetime as dt
+
+import sys
+sys.path.append(wd[:wd.rfind('tutu_quant')] + 'tutu_quant')
+
+from read_data import read_data
+
+from backtest import *
+from op import *
+from check_av import *
+
+start_time = '2018-01-01'
+end_time = '2022-01-01'
+
+from operator import *
+
+from deap import base,creator,tools,gp,algorithms
+
+data_need = 200
+
+start_time_adj = (dt.datetime.strptime(start_time,'%Y-%m-%d') - dt.timedelta(days = data_need))
+
+ret = read_data('ret',start_time = start_time_adj,end_time = end_time)
+ana_obj = SingleFactor(ret,start_time = start_time,end_time = end_time)
+
+high = read_data('high',start_time = start_time_adj,end_time = end_time)
+factor = read_data('factor',start_time = start_time_adj,end_time = end_time)
+low = read_data('low',start_time = start_time_adj,end_time = end_time)
+
+close = read_data('close',start_time = start_time_adj,end_time = end_time)
+oopen = read_data('open',start_time = start_time_adj,end_time = end_time)
+factor = read_data('factor',start_time = start_time_adj,end_time = end_time)
+volume= read_data('volume',start_time = start_time_adj,end_time = end_time)
+vwap = read_data('vwap',start_time = start_time_adj,end_time = end_time)
+
+ind = read_data('sw_l1',start_time = start_time_adj,end_time = end_time)
+
+ind = ind.reindex(columns = ret.columns)
+
+ind2 = read_data('sw_l2',start_time = start_time_adj,end_time = end_time)
+
+ind2 = ind.reindex(columns = ret.columns)
+
+turnover = read_data('turnover',start_time = start_time_adj,end_time = end_time)
+
+turnover = turnover.reindex(columns = ret.columns)
+
+amount = read_data('amount',start_time = start_time_adj,end_time = end_time)
+
+cap= read_data('cap',start_time = start_time_adj,end_time = end_time)
+cap = cap.reindex(columns = ret.columns)
+
+dealnum= read_data('dealnum',start_time = start_time_adj,end_time = end_time)
+dealnum = dealnum.reindex(columns = ret.columns)
+
+inflows= read_data('inflows',start_time = start_time_adj,end_time = end_time)
+inflows = inflows.reindex(columns = ret.columns)
+inflowm= read_data('inflowm',start_time = start_time_adj,end_time = end_time)
+inflowm = inflowm.reindex(columns = ret.columns)
+inflowl= read_data('inflowl',start_time = start_time_adj,end_time = end_time)
+inflowl = inflowl.reindex(columns = ret.columns)
+inflowxl= read_data('inflowxl',start_time = start_time_adj,end_time = end_time)
+inflowxl = inflowxl.reindex(columns = ret.columns)
+outflows= read_data('outflows',start_time = start_time_adj,end_time = end_time)
+outflows = outflows.reindex(columns = ret.columns)
+outflowm= read_data('outflowm',start_time = start_time_adj,end_time = end_time)
+outflowm = outflowm.reindex(columns = ret.columns)
+outflowl= read_data('outflowl',start_time = start_time_adj,end_time = end_time)
+outflowl = outflowl.reindex(columns = ret.columns)
+outflowxl= read_data('outflowxl',start_time = start_time_adj,end_time = end_time)
+outflowxl = outflowxl.reindex(columns = ret.columns)
+
+def inverse(df):
+    return 1/df
+def neg(df):
+    return -df
+def div(df1,df2):
+    return df1/df2
+def mylog(df):
+    return np.log(np.abs(df))
+def mysqrt(df):
+    return np.sqrt(np.abs(df))
+
+def duizhe(df):
+    return tutu_duizhe(df)
+def duizhe2(df):
+    return tutu_duizhe2(df)
+def duizhe3(df):
+    return tutu_duizhe3(df)
+
+def mean5(df):
+    return tutu_ts_mean(df,5)
+def mean10(df):
+    return tutu_ts_mean(df,10)
+def mean20(df):
+    return tutu_ts_mean(df,20)
+def mean60(df):
+    return tutu_ts_mean(df,60)
+def mean120(df):
+    return tutu_ts_mean(df,120)
+
+
+def ema5(df):
+    return tutu_ema(df,5)
+def ema10(df):
+    return tutu_ema(df,10)
+def ema20(df):
+    return tutu_ema(df,20)
+def ema60(df):
+    return tutu_ema(df,60)
+def ema120(df):
+    return tutu_ema(df,120)
+
+
+def min5(df):
+    return tutu_ts_min(df,5)
+def min10(df):
+    return tutu_ts_min(df,10)
+def min20(df):
+    return tutu_ts_min(df,20)
+def min60(df):
+    return tutu_ts_min(df,60)
+def min120(df):
+    return tutu_ts_min(df,120)
+
+def max5(df):
+    return tutu_ts_max(df,5)
+def max10(df):
+    return tutu_ts_max(df,10)
+def max20(df):
+    return tutu_ts_max(df,20)
+def max60(df):
+    return tutu_ts_max(df,60)
+def max120(df):
+    return tutu_ts_max(df,120)
+
+
+def stddev5(df):
+    return tutu_ts_stddev(df,5)
+def stddev10(df):
+    return tutu_ts_stddev(df,10)
+def stddev20(df):
+    return tutu_ts_stddev(df,20)
+def stddev60(df):
+    return tutu_ts_stddev(df,60)
+def stddev120(df):
+    return tutu_ts_stddev(df,120)
+
+def delta5(df):
+    return df - tutu_ts_delay(df,5)
+def delta10(df):
+    return df - tutu_ts_delay(df,10)
+def delta20(df):
+    return df - tutu_ts_delay(df,20)
+def delta60(df):
+    return df - tutu_ts_delay(df,60)
+def delta120(df):
+    return df - tutu_ts_delay(df,120)
+
+
+def zscore5(df):
+    return tutu_ts_zscore(df,5)
+def zscore10(df):
+    return tutu_ts_zscore(df,10)
+def zscore20(df):
+    return tutu_ts_zscore(df,20)
+def zscore60(df):
+    return tutu_ts_zscore(df,60)
+def zscore120(df):
+    return tutu_ts_zscore(df,120)
+
+def qdyb_5(df1,df2):
+    return df1*np.sign(df2.rank(axis = 1,pct = True) - 0.5)
+def qdyb_6(df1,df2):
+    return df1*np.sign(df2.rank(axis = 1,pct = True) - 0.6)
+def qdyb_7(df1,df2):
+    return df1*np.sign(df2.rank(axis = 1,pct = True) - 0.7)
+def qdyb_8(df1,df2):
+    return df1*np.sign(df2.rank(axis = 1,pct = True) - 0.8)
+def qdyb_9(df1,df2):
+    return df1*np.sign(df2.rank(axis = 1,pct = True) - 0.9)
+
+def corr5(df1,df2):
+    return tutu_correlation(df1,df2,5)
+def corr10(df1,df2):
+    return tutu_correlation(df1,df2,10)
+def corr20(df1,df2):
+    return tutu_correlation(df1,df2,20)
+def corr60(df1,df2):
+    return tutu_correlation(df1,df2,60)
+def corr120(df1,df2):
+    return tutu_correlation(df1,df2,120)
+
+def win1(df):
+    return tutu_win(df,0.1,0.9)
+def win2(df):
+    return tutu_win(df,0.05,0.95)
+def win3(df):
+    return tutu_win(df,0.,0.9)
+def win4(df):
+    return tutu_win(df,0.,0.95)
+
+
+def indneu(df):
+    return tutu_group_demean(df,ind)
+def capneu1(df):
+    return tutu_tregresi(df,cap)
+def capneu2(df):
+    return tutu_tregresi(df,np.log(cap))
+
+#alpha = ['ret','high','low','oopen','volume','close','vwap','amount','turnover','inflows','inflowm','inflowl','inflowxl','outflows','outflowm','outflowl','outflowxl','dealnum']
+alpha = ['ret','high','low','oopen','volume','close','vwap','amount','turnover','dealnum']
+
+
+close_fq  = close * factor
+oopen_fq  =oopen* factor
+high_fq  = high * factor
+low_fq  = low * factor
+vwap_fq  = vwap * factor
+volume_fq  = volume * factor
+
+alpha += ['high_fq','low_fq','oopen_fq','volume_fq','close_fq','vwap_fq']
+
+
+
+creator.create('FitnessMax',base.Fitness,weights = (1.0,))
+creator.create('Individual',gp.PrimitiveTree,fitness = creator.FitnessMax)
+
+pset = gp.PrimitiveSet('main',len(alpha))
+
+for i in range(len(alpha)):
+    print(f"pset.renameArguments(ARG{i} = '{alpha[i]}')")
+    exec(f"pset.renameArguments(ARG{i} = '{alpha[i]}')")
+
+pset.addPrimitive(add,2)
+pset.addPrimitive(sub,2)
+pset.addPrimitive(mul,2)
+pset.addPrimitive(inverse,1)
+pset.addPrimitive(neg,1)
+pset.addPrimitive(div,2)
+pset.addPrimitive(mylog,1)
+pset.addPrimitive(mysqrt,1)
+pset.addPrimitive(duizhe,1)
+pset.addPrimitive(duizhe2,1)
+pset.addPrimitive(duizhe3,1)
+pset.addPrimitive(mean5,1)
+pset.addPrimitive(mean10,1)
+pset.addPrimitive(mean20,1)
+pset.addPrimitive(mean60,1)
+pset.addPrimitive(mean120,1)
+pset.addPrimitive(ema5,1)
+pset.addPrimitive(ema10,1)
+pset.addPrimitive(ema20,1)
+pset.addPrimitive(ema60,1)
+pset.addPrimitive(ema120,1)
+
+pset.addPrimitive(min5,1)
+pset.addPrimitive(min10,1)
+pset.addPrimitive(min20,1)
+pset.addPrimitive(min60,1)
+pset.addPrimitive(min120,1)
+pset.addPrimitive(max5,1)
+pset.addPrimitive(max10,1)
+pset.addPrimitive(max20,1)
+pset.addPrimitive(max60,1)
+pset.addPrimitive(max120,1)
+pset.addPrimitive(stddev5,1)
+pset.addPrimitive(stddev10,1)
+pset.addPrimitive(stddev20,1)
+pset.addPrimitive(stddev60,1)
+pset.addPrimitive(stddev120,1)
+pset.addPrimitive(delta5,1)
+pset.addPrimitive(delta10,1)
+pset.addPrimitive(delta20,1)
+pset.addPrimitive(delta60,1)
+pset.addPrimitive(delta120,1)
+
+pset.addPrimitive(zscore5,1)
+pset.addPrimitive(zscore10,1)
+pset.addPrimitive(zscore20,1)
+pset.addPrimitive(zscore60,1)
+pset.addPrimitive(zscore120,1)
+
+pset.addPrimitive(qdyb_5,2)
+pset.addPrimitive(qdyb_6,2)
+pset.addPrimitive(qdyb_8,2)
+pset.addPrimitive(qdyb_7,2)
+pset.addPrimitive(qdyb_9,2)
+pset.addPrimitive(corr5,2)
+pset.addPrimitive(corr10,2)
+pset.addPrimitive(corr20,2)
+pset.addPrimitive(corr60,2)
+pset.addPrimitive(corr120,2)
+
+pset.addPrimitive(win1,1)
+pset.addPrimitive(win2,1)
+pset.addPrimitive(win3,1)
+pset.addPrimitive(win4,1)
+
+pset.addPrimitive(tutu_getpure,3)
+
+pset.addPrimitive(indneu,1)
+pset.addPrimitive(capneu1,1)
+pset.addPrimitive(capneu2,1)
+
+pset.addPrimitive(tutu_max,2)
+pset.addPrimitive(tutu_min,2)
+
+def mymetric(expression):
+    expression = str(expression)
+    df = eval(expression)
+    if np.isnan(df).sum().sum()/5800860 > 0.5:
+        return -10,
+    ana_obj.process_factor(df)
+    sharpe = ana_obj.sharpe
+    if sharpe < -3:
+        expression = '-'+expression
+        df = -df
+        ana_obj.process_factor(df)
+        sharpe = ana_obj.sharpe
+    if sharpe >3:
+        with open('E:\\python\\tutu_quant\\geneticlog.txt','a') as fp:
+            print(expression,'##',round(sharpe,2),file = fp)
+    print(expression,'##',round(sharpe,2))
+    return ana_obj.sharpe,
+
+toolbox = base.Toolbox()
+toolbox.register('expr',gp.genHalfAndHalf,pset = pset,min_ = 1,max_ = 5)
+toolbox.register('individual',tools.initIterate,creator.Individual,toolbox.expr)
+toolbox.register('population',tools.initRepeat,list,toolbox.individual)
+toolbox.register('compile',gp.compile,pset = pset)
+toolbox.register('evaluate',mymetric)
+toolbox.register('select',tools.selTournament,tournsize = 3)
+toolbox.register('mate',gp.cxOnePoint)
+toolbox.register('expr_mut',gp.genFull,min_ = 0, max_ = 2)
+toolbox.register('mutate',gp.mutUniform,expr = toolbox.expr_mut,pset = pset)
+#import multiprocessing as mp
+#pool = mp.pool(4)
+#toolbox.register('map',pool.map)
+
+hof = tools.HallOfFame(10)
+
+pop = toolbox.population(n = 2000)
+pop,log = algorithms.eaSimple(pop,toolbox,0.5,0.1,10,halloffame = hof,verbose = True)
