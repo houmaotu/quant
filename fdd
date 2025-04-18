@@ -1,0 +1,400 @@
+# 日频 (1)
+
+| 编号 | 计算方法 | 分类 | 可解释性打分 | MS回测 | 饲养员回测 | MLP回测（CN） |  |  |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| daily000001 | -上下影线/收盘价的标准差回归resvol | vol | 10 | N/A | N/A | N/A |  |  |
+| daily000002 | 早盘主动净流入率稳定性 | mf | 10 | N/A | N/A | N/A |  |  |
+| daily000003 | log（流入资金/流出资金）回归ret的y_hat 进行对折 | mf | 5 | 1 | 0 | N/A |  |  |
+| daily000004 | turnover和日内收益ts corr | cor | 10 | 1 | 0 | N/A |  |  |
+| daily000005 | vret/ret的stddev120回归resvol和长期反转和size | vol | 5 | 1 | 0 | N/A |  |  |
+| daily000006 | 吉利 close的8，6，4统计 | psy | 10 | 1 | 0 | N/A |  |  |
+| daily000007 | turnover中性化之后std | vol | 10 | 1 | 0 | N/A |  |  |
+| daily000008 | (2 * close-high - low) /tutu_ts_delay(close,1) | vol | 10 | 1 | 0 | N/A |  |  |
+| daily000009 | ((close - oopen)/(high -low)) *amount 实体成交量 | act | 10 | 1 | 0 | N/A |  |  |
+| daily000010 | delay20的40日动量 | mom | 10 | 1 | 0 | N/A |  |  |
+| daily000011 | 日内反转close/open | rev | 10 | 1 | 0 | N/A |  |  |
+| daily000012 | 流动性np.abs(ret)/log(amount)然后再中性化 (也可以不abs) | act | 8 | 10 | 1 | N/A |  |  |
+| daily000013 | 小单资金流入占总资金流入占比[1] | mf | 10 | 1 | 0 | N/A |  |  |
+| daily000014 | vwap对close进行回归 | psy | 10 | 1 | 0 | N/A |  |  |
+| daily000015 | ret对折之后的tsdelta（smooth或者不smooth） | mid | 10 | 1 | 0 | N/A |  |  |
+| daily000016 | turnover的tsir | act | 10 | 1 | 0 | N/A |  |  |
+| daily000017 | volume的std的std | vol | 10 | 1 | 0 | N/A |  |  |
+| daily000018 | -tutu_ts_delay(close * factor,20)/factor然后行业中性化 | rev | 10 | 1 | 0 | N/A |  |  |
+| daily000019 | high/low的std | vol | 10 | 1 | 0 | N/A |  |  |
+| daily000020 | vwap的delta | rev | 10 | 1 | 0 | N/A |  |  |
+| daily000021 | vret - ret 平滑后对折再平滑 | vol | 6 | 1 | 0 | N/A |  |  |
+| daily000022 | maininflow ts_min | mf | 10 | 1 | 0 | N/A |  |  |
+| daily000023 | high/open的TS_IR | mom | 10 | 1 | 0 | N/A |  |  |
+| daily000024 | close/low的TS_ir | mom | 10 | 1 | 0 | N/A |  |  |
+| daily000025 | 隔夜动量 - 日内反转 先中心化再SM | mom | 10 | 1 | 0 | N/A |  |  |
+| daily000026 | cap的ts_delta | rev | 10 | 1 | 0 | N/A |  |  |
+| daily000027 | 筹码分布cm50的-std[2] | vol | 10 | 1 | 0 | N/A |  |  |
+| daily000028 | 筹码分布cm90的-std | vol | 10 | 1 | 0 | N/A |  |  |
+| daily000029 | 筹码分布cm50的ts_delta的SM | pre | 10 | 1 | 0 | N/A |  |  |
+| daily000030 | 远近turnover的比例 | act | 10 | 1 | 0 | N/A |  |  |
+| daily000031 | 传统反转回归传统动量 indneu | mom | 10 | 1 | 0 | N/A |  |  |
+| daily000032 | amount的delta的std | act | 10 | 1 | 0 | N/A |  |  |
+| daily000033 | 惊恐程度 np.abs(ret -hs_300_mat ) #/( np.abs(hs_300_mat) + np.abs(ret) + 0.1) [3] | psy | 10 | 1 | 0 | N/A |  |  |
+| daily000034 |  相对位置(close - low) / (high - low) 处理 SM 去掉ret1，甚至对折[4] | vol | 10 | 1 | 0 | N/A |  |  |
+| daily000035 | close/tsmean(close)的delta | mom | 10 | 1 | 0 | N/A |  |  |
+| daily000036 | ret和1234（计数mat）的tscorr | mom | 10 | 1 | 0 | N/A |  |  |
+| daily000037 | close的zscore和turnobver的zscore相乘 | act | 8 | 1 | 0 | N/A |  |  |
+| daily000038 | 球队硬币 ret按照 volitility或者turnover进行动量/反转判断 SM | rev | 10 | 1 | 1 |  |  |  |
+| daily000039 | 同上 更换为vret SM | rev | 10 | 1 | 1 | N/A |  |  |
+| daily000040 | maininflow的ema | mf | 10 | 1 | 1 |  |  |  |
+| daily000041 | maininflow的1/std | mf | 10 | 1 | 1 |  |  |  |
+| daily000042 | tutu_ts_mean(volume,120) [5] | psy | 5 | 1 | 0 |  |  |  |
+| daily000043 | tutu_ts_ir(amount,120)中性化 | act | 10 | 0 | 1 |  |  |  |
+| daily000044 | tutu_covariance(close.rank(axis = 1), volume.rank(axis = 1),20) | div | 10 | 1 | 1 |  |  |  |
+| daily000045 | open - vwap 中性化SM | psy | 10 | 0 | 1 |  |  |  |
+| daily000046 | vwap - close 中性化SM | psy | 10 | 0 | 1 |  |  |  |
+| daily000047 | vwap/(high + low + close) 中性化SM | psy | 10 | 0  | 1 |  |  |  |
+| daily000048 | gamma = tutu_tregresi(tutu_tregresi(ret,tutu_ts_delay(ret,1)),tutu_sign(ret)* np.log(volume)) 然后rank ema zscore tsmean | mom | 10 | 1 | 1 |  |  |  |
+| daily000049 | 压力 close和vol先ema再乘 / 先乘再ema 中心化后SM | pre | 10 | 1 | 1 |  |  |  |
+| daily000050 | amount/cap的ranknormalize stddev zscore 中性化 | vol | 10 | 1 | 1 |  |  |  |
+| daily000051 | vwap/close win之后剔除反转 SM 中性化 | rev | 10 | 1 | 1 |  |  |  |
+| daily000052 | 和hs300的beta[6] | beta | 10 | 1 | 1 |  |  |  |
+| daily000053 | 和zz1000的beta | beta | 10 | 1 | 1 |  |  |  |
+| daily000054 | 和hs300的上行beta | beta | 10 | 1 | 1 |  |  |  |
+| daily000055 | 和hs300的下行beta | beta | 10 | 1 | 1 |  |  |  |
+| daily000056 | 和zz1000的上行beta | beta | 10 | 1 | 1 |  |  |  |
+| daily000057 | 和zz1000的上行beta | beta | 10 | 1 | 1 |  |  |  |
+| daily000058 | RSI     ret_post = tutu_if(ret>0,ret,0)
+ret_abs = np.abs(ret)
+tmp = -tutu_ts_mean(ret_post,i)/tutu_ts_mean(ret_abs,i) | mom | 10 | 1 | 1 |  |  |  |
+| daily000059 | 高开 np.log(oopen*factor/tutu_ts_delay(close*factor,1)) | mom | 10 | 1 | 1 |  |  |  |
+| daily000060 | 行业超额收益 -tsmax20 | rev | 10 | 1 | 1 |  |  |  |
+| daily000061 | 行业超额turnover的SM | act | 10 | 1 | 1 |  |  |  |
+| daily000062 | longest_strick_above_mean(high*factor,i) | vol | 10 | 1 | 1 |  |  |  |
+| daily000063 | 长期min ret  | rev | 10 | 1 | 1 |  |  |  |
+| daily000064 | 短期max ret | rev | 10 | 1 | 1 |  |  |  |
+| daily000065 | 上下行波动率剔除动量 + 中性化    vp = tutu_ts_sum(tutu_if(ret>th,ret,th),n)**2
+vn = tutu_ts_sum(tutu_if(ret<th,ret,th),n)**2
+tmp = -vp + vn | vol | 10 | 1 | 1 |  |  |  |
+| daily000066 | getpure(inflows,outflows,ret) 然后SM[7][8] | mf | 10 | 1 | 1 |  |  |  |
+| daily000067 | getpure(inflowl,outflowl,ret) | mf | 10 | 1 | 1 |  |  |  |
+| daily000068 | getpure(inflows,outflows,close/open)  | mf | 10 | 1 | 1 |  |  |  |
+| daily000069 | getpure(inflows,outflows,ret)使用epsilon | mf | 10 | 1 | 1 |  |  |  |
+| daily000070 | getpure(inflows,outflows,ret)使用yhat | mf | 10 | 1 | 1 |  |  |  |
+| daily000071 | 真实波幅/昨收 当日和tsmean20比例 对折 中性化 真实波幅计算方法为tutu_max(np.abs(high*factor - low*factor ),np.abs(high*factor  - tutu_ts_delay(close*factor ,1)),np.abs(low*factor  - tutu_ts_delay(close*factor ,1))) | vol | 10 | 1 | 1 |  |  |  |
+| daily000072 | 真实波幅/昨收 tsmean20和tsmean120比例 对折 中性化 | vol | 10 | 1 | 1 |  |  |  |
+| daily000073 | 真实波幅/昨收 的-tsmax | vol | 10 | 1 | 1 |  |  |  |
+| daily000074 | -log volume sm | act | 7 | 1 | 1 |  |  |  |
+| daily000075 | -log amount sm ind | act | 7 | 1 | 1 |  |  |  |
+| daily000076 | (close - low)/(high - low) 去掉ret | vol | 10 | 1 | 1 |  |  |  |
+| daily000077 | ((close - oopen)/(high -low)) *volume | act | 6 | 1 | 1 |  |  |  |
+| daily000078 | tutu_correlation(ret_night,tutu_ts_delay(turnover,1),20) 中性化 | cor | 10 | 1 | 1 |  |  |  |
+| daily000079 | tutu_ts_stddev(tutu_rank_normalize(volume),20) | vol | 5 | 1 | 1 |  |  |  |
+| daily000080 | tutu_ts_stddev(inflows/outflows,20) | mf | 10 | 1 | 1 |  |  |  |
+| daily000081 | inflowm/outflowm sm | mf | 10 | 1 | 1 |  |  |  |
+| daily000082 | tmp = -tutu_ema(np.abs(ret),5) * tutu_ema(volume,5)
+tmp = tmp - tutu_ts_delay(tmp,120)
+tmp = tutu_ts_mean(tmp,20) | act | 10 | 1 | 1 |  |  |  |
+| daily000083 | ret和close的相关性 | cor | 10 | 1 | 1 |  |  |  |
+| daily000084 | 90日涨幅（close的差值）行业是指中性化 | mom | 10 | 1 | 1 |  |  |  |
+| daily000085 | -tutu_correlation(tutu_group_demean(ret,ind),tutu_group_demean(inflowl/outflowl,ind),20)再中性化 | cor | 10 | 1 | 1 |  |  |  |
+| daily000086 | high的20日均值和方差（mu，sigma）进行展开tmp**3 + 3 * mu**2 * tmp - 3 * mu * tmp **2 - mu **3然后再除以sigma**3，取符号tsmin 之后处理 | vol | 10 | 1 | 1 |  |  |  |
+| daily000086 |  -tutu_ema(ret* amount,60) | avt | 10 | 1 | 1 |  |  |  |
+| daily000088 | 和三个月min价格的涨幅 对折后sm中性化吃力 | mid | 8 | 1 | 1 |  |  |  |
+| daily000089 | tutu_ts_mean(tutu_correlation(close,low,20),60)) | cor | 8 | 1 | 1 |  |  |  |
+| daily000090 | tutu_ts_std(tutu_correlation(close,low,20),60)) | vol | 8 | 1 | 1 |  |  |  |
+| daily000091 |  volume tsdelta对折 | vol | 7 | 1 | 1 |  |  |  |
+| daily000092 | tmp = tutu_rank_normalize(amount)
+tmp = tutu_ts_stddev(tmp,60)
+tmp = tutu_ts_zscore(tmp,5) | vol | 10 | 1 | 1 |  |  |  |
+| daily000093 | tmp = close * factor - tutu_ts_delay(close* factor,5)
+tmp = tmp/factor
+tmp = tutu_duizhe(tmp)
+tmp = tutu_ema(tmp,5)
+tmp = tutu_ts_stddev(tmp,5)
+tmp = tutu_ts_zscore(tmp,60) | vol | 6 | 1 | 1 |  |  |  |
+| daily000094 | turnover对折 SM | mid | 8 | 1 | 1 |  |  |  |
+| daily000095 | ret的grid search[9] | alg | 10 | 1 | 1 |  |  |  |
+| daily000096 | tmp = tutu_rank_normalize(amount/cap)
+tmp = tutu_ts_stddev(tmp,i)
+tmp = tutu_ts_zscore(tmp,j)
+tmp = tutu_tregresi(tmp,np.log(cap))
+tmp = tutu_group_demean(tmp,ind) | vol | 10 | 1 | 1 |  |  |  |
+| daily000097 | ret * volume sm | act | 10 | 1 | 1 |  |  |  |
+| daily000098 | 中性化的close的变化  tmp = tutu_group_demean(close,ind)
+tmp = tutu_tregresi(tmp,cap)
+tmp = tutu_ts_delay(tmp,63) - tmp | rev | 10 | 1 | 1 |  |  |  |
+| daily000099 | close stddev的变化 | vol | 10 | 1 | 1 |  |  |  |
+| daily000100 | tutu_getpure(ret, close, vwap) | rev | 8 | 1 | 1 |  |  |  |
+| daily000101 | delta120((div(vwap, close))) | rev | 8 | 1 | 1 |  |  |  |
+| daily000102 | tutu_correlation(np.abs(ret),tutu_ts_delay(turnover,1),21) | cor | 10 | 1 | 1 |  |  |  |
+| daily000103 | tutu_correlation(ret,tutu_ts_delay(turnover,1),21)的tsmin | cor | 10 | 1 | 1 |  |  |  |
+| daily000104 | tutu_correlation(ret,turnover,21)的-tsmin | cor | 10 | 1 | 1 |  |  |  |
+| daily000105 | ret市值中心化之后的tsmin | rev | 10 | 1 | 1 |  |  |  |
+| daily000106 | 和主板涨停的票的相关性的·max，去除掉ret的影响之后tsmin中性化[10] | rev | 10 |  |  |  |  |  |
+| daily000107 | 同上 更改为 -tsmax | rev | 10 |  |  |  |  |  |
+| daily000108 | 同上 ret都更改为delay1的ret 最后改为tutu_ts_min(tmp,120) - tutu_ts_max(tmp,120) | rev | 10 |  |  |  |  |  |
+| daily000109 | 高低getpure ret 去掉mom之后tsmin | vol | 10 |  |  |  |  |  |
+| daily000110 | volume 和一段时间volume的均值做差，要-ts_max | act | 8 |  |  |  |  |  |
+| daily000111 | volume 和一段时间volume的均值做差 对折之后ema | mid | 6 |  |  |  |  |  |
+| daily000112 | 筹码分布 cm60 - cm40 ts min [2] | pre | 10 |  |  |  |  |  |
+| daily000113 | (2 *close - high - low)/(high - low)  -tsmin | vol | 8 |  |  |  |  |  |
+| daily000114 | ret和12345的-covariance | rev | 10 |  |  |  |  |  |
+| daily000115 | -close的差 * volume的差去动量 | act | 8 |  |  |  |  |  |
+| daily000116 |  np.abs((tutu_ts_mean(volume,10) -tutu_ts_mean(volume,40))) / tutu_ts_mean(volume,20) | vol | 10 |  |  |  |  |  |
+| daily000117 | tutu_ts_mean(ret,i1) * tutu_ts_mean(volume,i2) * tutu_ts_mean(vwap,i3) * tutu_ts_mean(high - close,i4) | algo | 4 |  |  |  |  |  |
+| daily000118 | amount high corr tsmin | cor | 10 |  |  |  |  |  |
+| daily000119 | 收集指标 tutu_if(ret > 0, low, high) / close | rev | 10 |  |  |  |  |  |
+| daily000120 | ASI累计震动升降指标 ：
+A = np.abs(high - tutu_ts_delay(close,1))
+B = np.abs(low - tutu_ts_delay(close,1))
+C = np.abs(high - tutu_ts_delay(low,1))
+D = np.abs(tutu_ts_delay(close - oopen,1))
+R = tutu_if(A >= tutu_max(B,C),A + B/2 + D/4,tutu_if(B >= C,B + A/2 + D/4, C + D/4))
+E = close - tutu_ts_delay(close,1)
+F = close - oopen
+G = tutu_ts_delay(close - oopen,1)
+X = E + F/2 + G
+K = tutu_max(A,B)
+SI = X/R * K | mom | 10 |  |  |  |  |  |
+| daily000121 |  -tutu_ts_mean(ret**3，k)/tutu_ts_mean(ret**2，k) ^ (3/2) reg动量 | vol | 10 |  |  |  |  |  |
+| daily000122 |  -tutu_ts_mean(ret**4，k)/tutu_ts_mean(ret**2，k) ^ (2)  | vol | 10 |  |  |  |  |  |
+| daily000123 | 非流动性 np.abs(ret) /amount 长期tsir | act | 10 |  |  |  |  |  |
+| daily000124 |  2 * twap - vwap - close ema 去掉动量 capind zscore [11] | mic | 8 |  |  |  |  |  |
+| daily000125 |  vwap/high 和high的相关性  | cor | 10 |  |  |  |  |  |
+| daily000126 | high和low的相关性 | cor | 10 |  |  |  |  |  |
+| daily000127 | tutu_ts_mean(amount,w)/tutu_ts_stddev(amount,w)**(1.5) | mic | 10 |  |  |  |  |  |
+| daily000128 |  影线 s = high*factor  - tutu_max(oopen*factor ,close*factor )
+x =  tutu_min(oopen*factor ,close*factor ) - low*factor
+sm  = s/tutu_ts_mean(s,5)
+xm  = x/tutu_ts_mean(x,5)
+tmp = sm-xm | vol | 10 |  |  |  |  |  |
+| daily000129 | 同上 和收盘比较的影线 | vol | 10 |  |  |  |  |  |
+| daily000130 | 同上 改为std | vol | 10 |  |  |  |  |  |
+| daily000131 | 同上 和收盘比较的影线 改为std | vol | 10 |  |  |  |  |  |
+| daily000132 | 同上TSIR[12] | vol | 10 |  |  |  |  |  |
+| daily000133 | volume amount corr 回归波动tsmin | cor | 10 |  |  |  |  |  |
+| daily000134 | ret close corr tsmin | cor | 10 |  |  |  |  |  |
+| daily000135 | close amount corr tsmin | cor | 8 |  |  |  |  |  |
+| daily000136 | ret20 volitility corr去动量 | cor | 10 |  |  |  |  |  |
+| daily000137 | amount volitility corr 去ret tsmin | cor | 10 |  |  |  |  |  |
+| daily000138 | amount ret20 corr 去ret tsmin | cor | 7 |  |  |  |  |  |
+| daily000139 | 假阳率高的不好 | psy | 10 |  |  |  |  |  |
+| daily000140 | open - vwap去换手 | rev | 10 |  |  |  |  |  |
+| daily000141 | open - close去换手 | rev | 10 |  |  |  |  |  |
+| daily000142 | 反转增强 按照小单比例判断    xdzb = (inflows+ outflows)/amount
+
+tmp = ret * ((tutu_group_demean(xdzb,ind))) | rev | 10 |  |  |  |  |  |
+| daily000143 | 同上xdzb改为turnover | rev | 10 |  |  |  |  |  |
+| daily000144 | 同上xdzb改为volitility | rev | 10 |  |  |  |  |  |
+| daily000145 | 小单占比同样 但是纵向20天比较去大的5天和小的5天[13] | rev | 10 |  |  |  |  |  |
+| daily000146 | 同上 更改为turnover | rev | 10 |  |  |  |  |  |
+| daily000147 | 同上 更改为大单占比 | rev | 10 |  |  |  |  |  |
+| daily000148 | -tutu_high_day(tutu_group_demean(high*factor,ind),21)[14] | rev | 10 |  |  |  |  |  |
+| daily000149 | -tutu_high_day(tutu_group_demean((amount/cap),ind),21*3) | act | 10 |  |  |  |  |  |
+| daily000150 | 和中证1000波动的相关性 | cor | 10 |  |  |  |  |  |
+| daily000151 | 周线high - low /vwap tsir | vol | 10 |  |  |  |  |  |
+| daily000152 | 同上 改为月线 | vol | 10 |  |  |  |  |  |
+| daily000153 | 周上影线和周下影线的差tsmin去动量中性化 | rev | 10 |  |  |  |  |  |
+| daily000154 | -ret.rolling(w).skew() | vol | 10 |  |  |  |  |  |
+| daily000155 | -vret.rolling(w).skew() (用amount计算的ret) | vol | 10 |  |  |  |  |  |
+| daily000156 | -vret.rolling(w).std()  | vol | 10 |  |  |  |  |  |
+| daily000157 | 动量reg反转 | rev | 10 |  |  |  |  |  |
+| daily000158 | log volume* ret 和1234 的cor | mom | 10 |  |  |  |  |  |
+| daily000159 |  vmacd （amount） | mom | 10 |  |  |  |  |  |
+| daily000160 |  (high + low - 2 * close) * volume | act | 8 |  |  |  |  |  |
+| daily000161 | 隔夜ret的std和日内ret(close/open)的std的比例 |  |  |  |  |  |  |  |
+| daily000162 | 每天的聪明程度np.abs(a.ret)/np.sqrt(a.volume+1) | mom | 10 |  |  |  |  |  |
+| daily000163 | 实体K线占9成以上的比例  | psy | 10 |  |  |  |  |  |
+| daily000164 | ret和ind ret的cor | cor | 10 |  |  |  |  |  |
+| daily000165 | ret aret的corr | cor | 10 |  |  |  |  |  |
+| daily000166 |  sm之后的ret和re的cor | cor | 10 |  |  |  |  |  |
+| daily000167 | ret和voltility的cor | cor | 10 |  |  |  |  |  |
+| daily000168 | 均笔金额 成交金额和成交比数的cor | cor | 10 |  |  |  |  |  |
+| daily000169 | 1234和inflows - outflows的相关性 | mf | 10 |  |  |  |  |  |
+| daily000170 | 涨停家比例-0.5 * (ret的符号) | rev | 10 |  |  |  |  |  |
+| daily000171 | 20天 价格高的4天的换手的和除以总换手 反向 | vol | 10 |  |  |  |  |  |
+| daily000172 |  - turnover * cap | vol | 10 |  |  |  |  |  |
+| daily000173 | high volume的corr × close的std的rank | cor | 6 |  |  |  |  |  |
+| daily000174 |  high的skew | vol | 10 |  |  |  |  |  |
+| daily000175 | close - open的abs的tsmax的tsmean | vol | 10 |  |  |  |  |  |
+| daily000176 |     deriv = close- oopen
+envel = tutu_ts_max(np.abs(deriv),4)
+volatil = tutu_ts_mean(envel,8)，volatil的TS_IR | mom | 10 |  |  |  |  |  |
+| daily000177 | -均笔量 | act | 8 |  |  |  |  |  |
+| daily000178 | ret的signed 二次方的tssum 去动量和换手 | mom | 10 |  |  |  |  |  |
+| daily000179 | ret和行业ret的cor | cor | 10 |  |  |  |  |  |
+| daily000180 | atr和他的tsmean的比例的-txmax | vol | 10 |  |  |  |  |  |
+| daily000181 | close的stddev的zscore | vol | 10 |  |  |  |  |  |
+| daily000182 | ret的mean的tsir去掉短期反转 | mom | 10 |  |  |  |  |  |
+| daily000183 |     tmp = tutu_win(amount,0.01,0.95)
+tmp = tutu_ts_mean(tmp,w)/tutu_ts_stddev(tmp,w)**(1.5)
+tmp = tutu_group_demean(tmp,ind) | algo | 7 |  |  |  |  |  |
+| daily000184 |     tmp =  (p + (vwap - close).rank(axis = 1,pct = True)) / ((vwap + close).rank(axis = 1,pct = True) + p)
+tmp = tmp.rank(axis = 1,pct = True) | algo | 7 |  |  |  |  |  |
+|  |  |  |  |  |  |  |  |  |
+
+[1] 这是一系列因子 原文日频资金流和amount类别一起运算
+
+[2]筹码代码详见兔兔保存的代码 主要是换手 不换手连续乘下来的
+
+[3]具体解析稍后看
+
+[4]
+
+```python
+weizhi = -(close - low)/(high - low)
+tmp = weizhi
+tmp = tutu_ema(weizhi,5)
+tmp = tutu_tregresi(weizhi,tutu_ts_delay(ret,1))
+tmp = tutu_group_demean(weizhi,ind)
+tmp2= -np.abs(tmp.rank(axis = 1,pct = True) - 11/20)
+tmp2rk = tmp2.rank(axis = 1,pct = True)
+tmp3 = tutu_if(tmp2rk > 0.99,1.2,tmp2rk)
+tmp = tmp3
+tmp = tutu_ts_mean(tmp3,10)
+
+```
+
+[5]怀疑是小市值 不确定 需要切换股票池
+
+[6]此类别的日内未尝试
+
+[7]
+
+```python
+def tutu_getpure(r,b,a):
+	assert isinstance(r,pd.DataFrame) and isinstance(b,pd.DataFrame) and isinstance(a,pd.DataFrame), '不是df'
+	assert b.shape == a.shape == r.shape, '形状不一致'
+	b = b.abs()
+	a = a.abs()
+	epsilon = tutu_tregresi(np.log(b/a),r)
+	tp = np.exp(epsilon)
+	i = (a + b) * tp/(1 + tp)
+	o = (a + b) /(1 + tp)
+	return o - i
+	
+	
+```
+
+[8] 此类别因子可以排列组合 本表格仅作实例 具体方法可尝试 也可以更改为ts的回归 还可以是用epsilon yhat等
+
+```python
+def tutu_getpure2(r,b,a):
+    assert isinstance(r,pd.DataFrame) and isinstance(b,pd.DataFrame) and isinstance(a,pd.DataFrame), '不是df'
+    assert b.shape == a.shape == r.shape, '形状不一致'
+    b = b.abs()
+    a = a.abs()
+    epsilon = tutu_regresi(np.log(b/a),r,20)
+    tp = np.exp(epsilon)
+    i = (a + b) * tp/(1 + tp)
+    o = (a + b) /(1 + tp)
+    return o - i
+
+```
+
+[9]
+
+```python
+def get5(df):
+    dfr = df.rank(axis = 1,pct = True)
+    return [tutu_if(dfr > 0.8,1,0),tutu_if((dfr > 0.6)&(dfr <= 0.8),1,0),tutu_if((dfr > 0.4)&(dfr <= 0.6),1,0),tutu_if((dfr > 0.2)&(dfr <= 0.4),1,0),tutu_if(dfr<=0.2,1,0)]
+
+data = ret
+data0 = data
+data1 =tutu_ts_delay(data,1)
+data2=tutu_ts_delay(data,2)
+data3=tutu_ts_delay(data,3)
+data4=tutu_ts_delay(data,4)
+data5=tutu_ts_delay(data,5)
+data20 = tutu_ts_mean(data,20)
+data40= tutu_ts_mean(data,40)
+data60= tutu_ts_mean(data,60)
+data120= tutu_ts_mean(data,120)
+data180 = tutu_ts_mean(data,180)
+
+dflist = []
+
+for mydata in [data0,data1,data2,data3,data4,data5,data20,data40,data60,data120,data180]:
+    dflist = dflist + get5(mydata)
+    
+def mymetric(ls):
+    df = reduce(lambda a,b : a.add(b), [dflist[i] * ls[i] for i in range(dim)])
+    ana_obj.process_factor(df)
+    return ana_obj.sharpe
+
+dim = len(dflist)
+
+sp = 0
+ls = [0.5] * dim
+for count in range(1,100):
+    print(f'兔兔的第{count}轮')
+    for pos in range(dim):
+        print(f'{pos}',end = ' ')
+        ls_list = [(ls[:pos] + [i/20] + ls[pos+1:]) for i in range(21)]
+        ls_map = map(mymetric,ls_list)
+        ls_res = list(ls_map)
+        new_index = ls_res.index(max(ls_res))
+        ls = ls_list[new_index]
+        sp2 = max(ls_res)
+        print(f'现在的sharpe是{sp2}')
+        print('冲')
+        if sp2 - sp < 0.05:
+            print('就这样')
+            break
+        else:
+            sp = sp2
+            
+print(ls)
+tmp = reduce(lambda a,b : a.add(b), [dflist[i] * ls[i] for i in range(dim)])
+```
+
+[10]细节详见tutufactor95
+
+[11]  其他价格组合 分子分母都有
+
+[12] 还有单独考虑上下影线的东西 可以综合尝试
+
+[13]
+
+```python
+xdzb = (inflows+ outflows)/amount
+tmp1 = pd.DataFrame(np.nan,index = ret.index,columns = ret.columns)
+tmp2 = pd.DataFrame(np.nan,index = ret.index,columns = ret.columns)
+w = 20
+n = 5
+
+for i in range(w,ret.shape[0]):
+    ret_tmp = ret.iloc[i - w+1:i+1,:]
+    xdzb_tmp = xdzb.iloc[i - w+1:i+1,:]
+
+    xdzb_tmp = xdzb_tmp.rank(axis = 0,method = 'first')
+
+    t1 = (xdzb_tmp> (w -n)) * 1
+    t2 = (xdzb_tmp<= (n)) * 1
+
+    tmp1.iloc[i,:] = (ret_tmp * t1).sum()
+    tmp2.iloc[i,:] = (ret_tmp * t2).sum()
+
+tmp = tmp1 - tmp2
+
+```
+
+[14]
+
+```python
+def tutu_high_day(df,n):
+    data = df.values.copy()
+    rolling_max = np.max(np.lib.stride_tricks.sliding_window_view(data, (n,df.shape[1])), axis=1)
+    max_positions = np.argmax(rolling_max, axis=1) + 1
+    return pd.DataFrame(max_positions, index=df.index[n - 1:], columns=df.columns).reindex(index = df.index)
+def tutu_low_day(df,n):
+    data = df.values.copy()
+    rolling_max = np.min(np.lib.stride_tricks.sliding_window_view(data, (n,df.shape[1])), axis=1)
+    max_positions = np.argmin(rolling_max, axis=1) + 1
+    return pd.DataFrame(max_positions, index=df.index[n - 1:], columns=df.columns).reindex(index = df.index)
+
+```
+
+不清楚：
+
+按照换手率turnover决定是tunover正序还是反序
+
+锚定反转
+
+仔细查
