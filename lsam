@@ -1,0 +1,35 @@
+    def longest_strick_above_mean(df,n):
+        tmp_df = pd.DataFrame(np.nan,index = df.index,columns = df.columns)
+        df_m = tutu_ts_mean(df,n)
+        for i in range(n,df.shape[0]):
+            df_tmp = df.iloc[(i-n):i,]
+            df_mtmp = df_m.iloc[[i for tu in range(n)],]
+            df_mtmp.index = df_tmp.index
+            ct_tmp = tutu_if(df_tmp > df_mtmp,1.,0.)
+            for j in range(1,n):
+                ct_tmp.iloc[j,:] = ct_tmp.iloc[j,:] + ct_tmp.iloc[j,:] * ct_tmp.iloc[j-1,:]
+            fuzhi = ct_tmp.max().values
+            tmp_df.iloc[i,:] = fuzhi
+        return tmp_df
+
+    i,j = 20,40
+    tmp2 = longest_strick_above_mean(high*factor,i)
+    tmp = tutu_ts_mean(tmp2,j)
+    tmp = tutu_group_demean(tmp,ind)
+    signal_value = tmp
+
+
+        k = 20
+    tmp = high*factor
+    mu = tutu_ts_mean(tmp,k)
+    sigma = tutu_ts_stddev(tmp,k)
+
+    tmp = tmp**3 + 3 * mu**2 * tmp - 3 * mu * tmp **2 - mu **3
+
+    tmp /=sigma**3
+
+    #tmp = tutu_duizhe(tmp)
+
+    tmp =  -tmp
+    tmp = tutu_win(tmp,0.01,0.9)
+    tmp = tutu_ts_mean(tmp,20)
