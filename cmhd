@@ -1,0 +1,166 @@
+def tutu_high_day(df,n):
+    data = df.values.copy()
+    rolling_max = np.max(np.lib.stride_tricks.sliding_window_view(data, (n,df.shape[1])), axis=1)
+    max_positions = np.argmax(rolling_max, axis=1) + 1
+    return pd.DataFrame(max_positions, index=df.index[n - 1:], columns=df.columns).reindex(index = df.index)
+def tutu_low_day(df,n):
+    data = df.values.copy()
+    rolling_max = np.min(np.lib.stride_tricks.sliding_window_view(data, (n,df.shape[1])), axis=1)
+    max_positions = np.argmin(rolling_max, axis=1) + 1
+    return pd.DataFrame(max_positions, index=df.index[n - 1:], columns=df.columns).reindex(index = df.index)
+
+  def update_choumatutu(start_time,end_time,refresh = False):
+    exist_files = os.listdir(mywd + '\\data01d')
+
+    if not refresh and ("cmday01.fea" in exist_files):
+        a = pd.read_feather(mywd + "\\data01d\\cmday01.fea")
+        last_update = pd.to_datetime(a['trade_date'].values[-1]).strftime('%Y-%m-%d')
+        start_time = max(start_time,last_update)
+
+
+
+    start_time_adj = (dt.datetime.strptime(start_time,'%Y-%m-%d') - dt.timedelta(days = 400)).strftime('%Y-%m-%d')
+    start_time_adj = max(start_time_adj,'2016-06-20')
+    close = read_data('close',start_time = start_time_adj,end_time = end_time)
+    vwap = read_data('vwap',start_time = start_time_adj,end_time = end_time)
+    factor = read_data('factor',start_time = start_time_adj,end_time = end_time)
+    turnover = read_data('turnover',start_time = start_time_adj,end_time = end_time)/100
+
+    close_fq  = close * factor
+    vwap_fq = vwap * factor  #读取复权数据
+
+    new_index = close.index[close.index >= start_time]
+
+    cmday01 = pd.DataFrame(np.nan,index = new_index,columns = close.columns)
+    cmday02 = pd.DataFrame(np.nan,index = new_index,columns = close.columns)
+    cmday05 = pd.DataFrame(np.nan,index = new_index,columns = close.columns)
+    cmday10 = pd.DataFrame(np.nan,index = new_index,columns = close.columns)
+    cmday15 = pd.DataFrame(np.nan,index = new_index,columns = close.columns)
+    cmday20 = pd.DataFrame(np.nan,index = new_index,columns = close.columns)
+    cmday25 = pd.DataFrame(np.nan,index = new_index,columns = close.columns)
+    cmday30 = pd.DataFrame(np.nan,index = new_index,columns = close.columns)
+    cmday35 = pd.DataFrame(np.nan,index = new_index,columns = close.columns)
+    cmday40 = pd.DataFrame(np.nan,index = new_index,columns = close.columns)
+    cmday45 = pd.DataFrame(np.nan,index = new_index,columns = close.columns)
+    cmday50 = pd.DataFrame(np.nan,index = new_index,columns = close.columns)
+    cmday55 = pd.DataFrame(np.nan,index = new_index,columns = close.columns)
+    cmday60 = pd.DataFrame(np.nan,index = new_index,columns = close.columns)
+    cmday65 = pd.DataFrame(np.nan,index = new_index,columns = close.columns)
+    cmday70 = pd.DataFrame(np.nan,index = new_index,columns = close.columns)
+    cmday75 = pd.DataFrame(np.nan,index = new_index,columns = close.columns)
+    cmday80 = pd.DataFrame(np.nan,index = new_index,columns = close.columns)
+    cmday85 = pd.DataFrame(np.nan,index = new_index,columns = close.columns)
+    cmday90 = pd.DataFrame(np.nan,index = new_index,columns = close.columns)
+    cmday95 = pd.DataFrame(np.nan,index = new_index,columns = close.columns)
+    cmday98 = pd.DataFrame(np.nan,index = new_index,columns = close.columns)
+    cmday99 = pd.DataFrame(np.nan,index = new_index,columns = close.columns)
+
+    for inx in tqdm.trange(252,close.shape[0]):
+        #inx = close.index.get_loc(trade_date)
+        trade_date = close.index[inx]
+        if trade_date not in new_index:
+            continue
+        if trade_date < pd.to_datetime('2017-07-03'):
+            continue
+        #print(f'updating {trade_date}')
+        vwap_slice = vwap_fq.iloc[inx - 251:inx+1]
+        close_last = pd.DataFrame([close_fq.iloc[inx]] * 252,index = vwap_slice.index)
+        turnover_slice = turnover.iloc[inx - 251:inx+1]
+
+        turnover_slice_cp = (1 - turnover_slice[::-1]).cumprod()[::-1]
+
+        buturnover_slice = turnover_slice_cp * turnover_slice/(1 - turnover_slice)
+
+        d = 2 * np.log(2)/100
+        cm = np.log(vwap_slice/close_last )/d
+
+        cm = np.abs(cm)//1 * np.sign(cm) + 50
+
+        cm = tutu_if(cm > 100,100,cm)
+        cm = tutu_if(cm < 0,0,cm)
+
+        tmparr01 = pd.Series(np.nan,index = close.columns)
+        tmparr02 = pd.Series(np.nan,index = close.columns)
+        tmparr05 = pd.Series(np.nan,index = close.columns)
+        tmparr10 = pd.Series(np.nan,index = close.columns)
+        tmparr15 = pd.Series(np.nan,index = close.columns)
+        tmparr20 = pd.Series(np.nan,index = close.columns)
+        tmparr25 = pd.Series(np.nan,index = close.columns)
+        tmparr30 = pd.Series(np.nan,index = close.columns)
+        tmparr35 = pd.Series(np.nan,index = close.columns)
+        tmparr40 = pd.Series(np.nan,index = close.columns)
+        tmparr45 = pd.Series(np.nan,index = close.columns)
+        tmparr50 = pd.Series(np.nan,index = close.columns)
+        tmparr55 = pd.Series(np.nan,index = close.columns)
+        tmparr60 = pd.Series(np.nan,index = close.columns)
+        tmparr65 = pd.Series(np.nan,index = close.columns)
+        tmparr70 = pd.Series(np.nan,index = close.columns)
+        tmparr75 = pd.Series(np.nan,index = close.columns)
+        tmparr80 = pd.Series(np.nan,index = close.columns)
+        tmparr85 = pd.Series(np.nan,index = close.columns)
+        tmparr90 = pd.Series(np.nan,index = close.columns)
+        tmparr95 = pd.Series(np.nan,index = close.columns)
+        tmparr98 = pd.Series(np.nan,index = close.columns)
+        tmparr99 = pd.Series(np.nan,index = close.columns)
+
+        for ticker in tmparr01.index:
+
+            cmt = cm[ticker].values
+            wt = buturnover_slice[ticker].values
+
+            tmpcm = [0] * 101
+            for k in range(len(cmt)):
+                if not ((np.isnan(cmt[k])) or (np.isnan(wt[k]))):
+                    tmpcm[int(cmt[k])] += wt[k]
+
+            ddd = np.array(range(101))
+
+            if sum(tmpcm)!= 0:
+                tmpcm = tmpcm/sum(tmpcm)
+                tmparr01[ticker] = wquantiles.quantile(ddd,weights = tmpcm,quantile = 0.01)
+                tmparr02[ticker] = wquantiles.quantile(ddd,weights = tmpcm,quantile = 0.02)
+                tmparr05[ticker] = wquantiles.quantile(ddd,weights = tmpcm,quantile = 0.05)
+                tmparr10[ticker] = wquantiles.quantile(ddd,weights = tmpcm,quantile = 0.1)
+                tmparr15[ticker] = wquantiles.quantile(ddd,weights = tmpcm,quantile = 0.15)
+                tmparr20[ticker] = wquantiles.quantile(ddd,weights = tmpcm,quantile = 0.2)
+                tmparr25[ticker] = wquantiles.quantile(ddd,weights = tmpcm,quantile = 0.25)
+                tmparr30[ticker] = wquantiles.quantile(ddd,weights = tmpcm,quantile = 0.3)
+                tmparr35[ticker] = wquantiles.quantile(ddd,weights = tmpcm,quantile = 0.35)
+                tmparr40[ticker] = wquantiles.quantile(ddd,weights = tmpcm,quantile = 0.4)
+                tmparr45[ticker] = wquantiles.quantile(ddd,weights = tmpcm,quantile = 0.45)
+                tmparr50[ticker] = wquantiles.quantile(ddd,weights = tmpcm,quantile = 0.5)
+                tmparr55[ticker] = wquantiles.quantile(ddd,weights = tmpcm,quantile = 0.55)
+                tmparr60[ticker] = wquantiles.quantile(ddd,weights = tmpcm,quantile = 0.6)
+                tmparr65[ticker] = wquantiles.quantile(ddd,weights = tmpcm,quantile = 0.65)
+                tmparr70[ticker] = wquantiles.quantile(ddd,weights = tmpcm,quantile = 0.7)
+                tmparr75[ticker] = wquantiles.quantile(ddd,weights = tmpcm,quantile = 0.75)
+                tmparr80[ticker] = wquantiles.quantile(ddd,weights = tmpcm,quantile = 0.8)
+                tmparr85[ticker] = wquantiles.quantile(ddd,weights = tmpcm,quantile = 0.85)
+                tmparr90[ticker] = wquantiles.quantile(ddd,weights = tmpcm,quantile = 0.9)
+                tmparr95[ticker] = wquantiles.quantile(ddd,weights = tmpcm,quantile = 0.95)
+                tmparr98[ticker] = wquantiles.quantile(ddd,weights = tmpcm,quantile = 0.98)
+                tmparr99[ticker] = wquantiles.quantile(ddd,weights = tmpcm,quantile = 0.99)
+
+        cmday01.loc[trade_date] = tmparr01
+        cmday02.loc[trade_date] = tmparr02
+        cmday05.loc[trade_date] = tmparr05
+        cmday10.loc[trade_date] = tmparr10
+        cmday15.loc[trade_date] = tmparr15
+        cmday20.loc[trade_date] = tmparr20
+        cmday25.loc[trade_date] = tmparr25
+        cmday30.loc[trade_date] = tmparr30
+        cmday35.loc[trade_date] = tmparr35
+        cmday40.loc[trade_date] = tmparr40
+        cmday45.loc[trade_date] = tmparr45
+        cmday50.loc[trade_date] = tmparr50
+        cmday55.loc[trade_date] = tmparr55
+        cmday60.loc[trade_date] = tmparr60
+        cmday65.loc[trade_date] = tmparr65
+        cmday70.loc[trade_date] = tmparr70
+        cmday75.loc[trade_date] = tmparr75
+        cmday80.loc[trade_date] = tmparr80
+        cmday85.loc[trade_date] = tmparr85
+        cmday90.loc[trade_date] = tmparr90
+        cmday95.loc[trade_date] = tmparr95
+        cmday98.loc[trade_date] = tmparr98
+        cmday99.loc[trade_date] = tmparr99
