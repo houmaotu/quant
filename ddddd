@@ -1,0 +1,189 @@
+#两个df时间序列
+def tutu_regresi(df1,df2,n): #y,x
+    assert isinstance(df1,pd.DataFrame) and isinstance(df2,pd.DataFrame), '不是df'
+    assert df1.shape == df2.shape, '形状不一致'
+    assert df1.shape[0] >=n, 'df短了'
+    assert n<=40000,'n太巨大了'
+    df1_numpy = df1.copy().values
+    df2_numpy = df2.copy().values
+    mask = np.isinf(df1_numpy) | np.isinf(df2_numpy) | np.isnan(df1_numpy) | np.isnan(df2_numpy)
+    
+    num = tutu_rolling_sum_fornumpy(~mask,n)
+
+    df1_numpy = np.where(mask,0,df1_numpy)
+    df2_numpy = np.where(mask,0,df2_numpy)
+    
+    x_sum = tutu_rolling_sum_fornumpy(df2_numpy,n)
+    y_sum = tutu_rolling_sum_fornumpy(df1_numpy,n)
+    beta1 = num * tutu_rolling_sum_fornumpy(df2_numpy * df1_numpy,n) - x_sum * y_sum
+    beta1 = beta1/(num * tutu_rolling_sum_fornumpy(df2_numpy * df2_numpy,n) -  x_sum * x_sum)
+    
+    ym = y_sum/num
+    beta0 = ym - beta1 * x_sum/num
+    result = df1_numpy - beta0 - beta1 * df2_numpy
+    result = np.where(np.isnan(result),df1_numpy -ym,result)
+    result = np.where((num<=1) | mask,np.nan,result)
+    
+    return pd.DataFrame(result,index = df1.index,columns = df1.columns)
+
+def tutu_regbeta(df1,df2,n): #y,x
+    assert isinstance(df1,pd.DataFrame) and isinstance(df2,pd.DataFrame), '不是df'
+    assert df1.shape == df2.shape, '形状不一致'
+    assert df1.shape[0] >=n, 'df短了'
+    assert n<=40000,'n太巨大了'
+    df1_numpy = df1.copy().values
+    df2_numpy = df2.copy().values
+    mask = np.isinf(df1_numpy) | np.isinf(df2_numpy) | np.isnan(df1_numpy) | np.isnan(df2_numpy)
+    
+    num = tutu_rolling_sum_fornumpy(~mask,n)
+
+    df1_numpy = np.where(mask,0,df1_numpy)
+    df2_numpy = np.where(mask,0,df2_numpy)
+    
+    x_sum = tutu_rolling_sum_fornumpy(df2_numpy,n)
+    y_sum = tutu_rolling_sum_fornumpy(df1_numpy,n)
+    beta1 = num * tutu_rolling_sum_fornumpy(df2_numpy * df1_numpy,n) - x_sum * y_sum
+    beta1 = beta1/(num * tutu_rolling_sum_fornumpy(df2_numpy * df2_numpy,n) -  x_sum * x_sum)
+
+    result = beta1
+    result = np.where((num<=1) | mask,np.nan,result)
+    
+    return pd.DataFrame(result,index = df1.index,columns = df1.columns)
+
+def tutu_correlation(df1,df2,n): #y,x
+    assert isinstance(df1,pd.DataFrame) and isinstance(df2,pd.DataFrame), '不是df'
+    assert df1.shape == df2.shape, '形状不一致'
+    assert df1.shape[0] >=n, 'df短了'
+    assert n<=40000,'n太巨大了'
+    df1_numpy = df1.copy().values
+    df2_numpy = df2.copy().values
+    mask = np.isinf(df1_numpy) | np.isinf(df2_numpy) | np.isnan(df1_numpy) | np.isnan(df2_numpy)
+    
+    num = tutu_rolling_sum_fornumpy(~mask,n)
+
+    df1_numpy = np.where(mask,0,df1_numpy)
+    df2_numpy = np.where(mask,0,df2_numpy)
+    
+    x_sum = tutu_rolling_sum_fornumpy(df2_numpy,n)
+    y_sum = tutu_rolling_sum_fornumpy(df1_numpy,n)
+    beta1 = num * tutu_rolling_sum_fornumpy(df2_numpy * df1_numpy,n) - x_sum * y_sum
+
+    beta1 = beta1/ np.sqrt(num * tutu_rolling_sum_fornumpy(df2_numpy * df2_numpy,n) -  x_sum * x_sum)
+    beta1 = beta1/ np.sqrt(num * tutu_rolling_sum_fornumpy(df1_numpy * df1_numpy,n) -  y_sum * y_sum)
+
+    result = beta1
+    result = np.where((num<=1) | mask,np.nan,result)
+    
+    return pd.DataFrame(result,index = df1.index,columns = df1.columns)
+
+
+def tutu_covariance(df1,df2,n): #y,x
+    assert isinstance(df1,pd.DataFrame) and isinstance(df2,pd.DataFrame), '不是df'
+    assert df1.shape == df2.shape, '形状不一致'
+    assert df1.shape[0] >=n, 'df短了'
+    assert n<=40000,'n太巨大了'
+    df1_numpy = df1.copy().values
+    df2_numpy = df2.copy().values
+    mask = np.isinf(df1_numpy) | np.isinf(df2_numpy) | np.isnan(df1_numpy) | np.isnan(df2_numpy)
+    
+    num = tutu_rolling_sum_fornumpy(~mask,n)
+
+    df1_numpy = np.where(mask,0,df1_numpy)
+    df2_numpy = np.where(mask,0,df2_numpy)
+    
+    x_sum = tutu_rolling_sum_fornumpy(df2_numpy,n)
+    y_sum = tutu_rolling_sum_fornumpy(df1_numpy,n)
+    beta1 = num * tutu_rolling_sum_fornumpy(df2_numpy * df1_numpy,n) - x_sum * y_sum
+
+    result = beta1
+    result = np.where((num<=1) | mask,np.nan,result)
+    
+    return pd.DataFrame(result,index = df1.index,columns = df1.columns)
+
+def tutu_correlation2(df1,df2,n): #y,x
+    assert isinstance(df1,pd.DataFrame) and isinstance(df2,pd.DataFrame), '不是df'
+    assert df1.shape == df2.shape, '形状不一致'
+    assert df1.shape[0] >=n, 'df短了'
+    assert n<=40000,'n太巨大了'
+    df1_numpy = df1.copy().values
+    df2_numpy = df2.copy().values
+    mask = np.isinf(df1_numpy) | np.isinf(df2_numpy) | np.isnan(df1_numpy) | np.isnan(df2_numpy)
+    
+    num = tutu_rolling_sum_fornumpy(~mask,n)
+
+    df1_numpy = np.where(mask,0,df1_numpy)
+    df2_numpy = np.where(mask,0,df2_numpy)
+    
+    x_sum = tutu_rolling_sum_fornumpy(df2_numpy,n)
+    y_sum = tutu_rolling_sum_fornumpy(df1_numpy,n)
+    beta1 = num * tutu_rolling_sum_fornumpy(df2_numpy * df1_numpy,n) - x_sum * y_sum
+
+    beta1 = beta1/ np.sqrt(num * tutu_rolling_sum_fornumpy(df2_numpy * df2_numpy,n) -  x_sum * x_sum)
+    beta1 = beta1/ np.sqrt(num * tutu_rolling_sum_fornumpy(df1_numpy * df1_numpy,n) -  y_sum * y_sum)
+
+    result = beta1
+    result = np.where((num<=1) ,np.nan,result)
+    
+    return pd.DataFrame(result,index = df1.index,columns = df1.columns)
+
+
+def tutu_covariance2(df1,df2,n): #y,x
+    assert isinstance(df1,pd.DataFrame) and isinstance(df2,pd.DataFrame), '不是df'
+    assert df1.shape == df2.shape, '形状不一致'
+    assert df1.shape[0] >=n, 'df短了'
+    assert n<=40000,'n太巨大了'
+    df1_numpy = df1.copy().values
+    df2_numpy = df2.copy().values
+    mask = np.isinf(df1_numpy) | np.isinf(df2_numpy) | np.isnan(df1_numpy) | np.isnan(df2_numpy)
+    
+    num = tutu_rolling_sum_fornumpy(~mask,n)
+
+    df1_numpy = np.where(mask,0,df1_numpy)
+    df2_numpy = np.where(mask,0,df2_numpy)
+    
+    x_sum = tutu_rolling_sum_fornumpy(df2_numpy,n)
+    y_sum = tutu_rolling_sum_fornumpy(df1_numpy,n)
+    beta1 = num * tutu_rolling_sum_fornumpy(df2_numpy * df1_numpy,n) - x_sum * y_sum
+
+    result = beta1
+    result = np.where((num<=1) ,np.nan,result)
+    
+    return pd.DataFrame(result,index = df1.index,columns = df1.columns)
+
+def tutu_regbeta2(df1,df2,n): #y,x
+    assert isinstance(df1,pd.DataFrame) and isinstance(df2,pd.DataFrame), '不是df'
+    assert df1.shape == df2.shape, '形状不一致'
+    assert df1.shape[0] >=n, 'df短了'
+    assert n<=40000,'n太巨大了'
+    df1_numpy = df1.copy().values
+    df2_numpy = df2.copy().values
+    mask = np.isinf(df1_numpy) | np.isinf(df2_numpy) | np.isnan(df1_numpy) | np.isnan(df2_numpy)
+    
+    num = tutu_rolling_sum_fornumpy(~mask,n)
+
+    df1_numpy = np.where(mask,0,df1_numpy)
+    df2_numpy = np.where(mask,0,df2_numpy)
+    
+    x_sum = tutu_rolling_sum_fornumpy(df2_numpy,n)
+    y_sum = tutu_rolling_sum_fornumpy(df1_numpy,n)
+    beta1 = num * tutu_rolling_sum_fornumpy(df2_numpy * df1_numpy,n) - x_sum * y_sum
+    beta1 = beta1/(num * tutu_rolling_sum_fornumpy(df2_numpy * df2_numpy,n) -  x_sum * x_sum)
+
+    result = beta1
+    result = np.where((num<=1),np.nan,result)
+    
+    return pd.DataFrame(result,index = df1.index,columns = df1.columns)
+
+
+
+
+def tutu_getpure2(r,b,a):
+    assert isinstance(r,pd.DataFrame) and isinstance(b,pd.DataFrame) and isinstance(a,pd.DataFrame), '不是df'
+    assert b.shape == a.shape == r.shape, '形状不一致'
+    b = b.abs()
+    a = a.abs()
+    epsilon = tutu_regresi(np.log(b/a),r,20)
+    tp = np.exp(epsilon)
+    i = (a + b) * tp/(1 + tp)
+    o = (a + b) /(1 + tp)
+    return o - i
